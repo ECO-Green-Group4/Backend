@@ -5,7 +5,6 @@ import com.evmarket.trade.exception.AppException;
 import com.evmarket.trade.exception.ErrorHandler;
 import com.evmarket.trade.repository.UserRepository;
 import com.evmarket.trade.response.LoginResponse;
-import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.security.JwtService;
@@ -28,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public ResponseEntity<BaseResponse<Void>> register(RegisterRequest request) {
+    public ResponseEntity<String> register(RegisterRequest request) {
         validateRegister(request);
         User user = new User();
         user.setFullName(request.getFullName().trim());
@@ -43,16 +42,11 @@ public class AuthServiceImpl implements AuthService {
         user.setAddress(request.getAddress().trim());
         user = userRepository.save(user);
 
-        BaseResponse<Void> response = BaseResponse.<Void>builder()
-                .message("Registration successful")
-                .success(true)
-                .data(null)
-                .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok("Registration successful");
     }
 
     @Override
-    public ResponseEntity<BaseResponse<LoginResponse>> login(LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(LoginRequest request) {
         if (!StringUtils.hasText(request.getUsername()) || !StringUtils.hasText(request.getPassword())) {
             throw new AppException(ErrorHandler.INVALID_INPUT);
         }
@@ -72,29 +66,16 @@ public class AuthServiceImpl implements AuthService {
                 .sex(user.getGender())
                 .fullName(user.getFullName())
                 .build();
-        BaseResponse<LoginResponse> base = BaseResponse.<LoginResponse>builder()
-                .message("Login successful")
-                .success(true)
-                .data(response)
-                .build();
-        return ResponseEntity.ok(base);
+        return ResponseEntity.ok(response);
     }
 
     private void validateRegister(RegisterRequest request) {
-        if (!StringUtils.hasText(request.getFullName()) || !StringUtils.hasText(request.getUsername()) ||
-            !StringUtils.hasText(request.getEmail()) || !StringUtils.hasText(request.getPhoneNumber()) ||
-            !StringUtils.hasText(request.getPassword()) || request.getDateOfBirth() == null ||
-            !StringUtils.hasText(request.getSex()) || !StringUtils.hasText(request.getIdentityCard()) ||
-            !StringUtils.hasText(request.getAddress()) || !StringUtils.hasText(request.getConfirmPassword())) {
+        if (!StringUtils.hasText(request.getFullName()) || !StringUtils.hasText(request.getUsername()) || 
+            !StringUtils.hasText(request.getEmail()) || !StringUtils.hasText(request.getPhoneNumber()) || 
+            !StringUtils.hasText(request.getPassword()) || request.getDateOfBirth() == null || 
+            !StringUtils.hasText(request.getSex()) || !StringUtils.hasText(request.getIdentityCard()) || 
+            !StringUtils.hasText(request.getAddress())) {
             throw new AppException(ErrorHandler.INVALID_INPUT);
-        }
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new AppException(ErrorHandler.PASSWORD_CONFIRM_NOT_MATCH);
-        }
-        if (!request.getSex().trim().equalsIgnoreCase("male") &&
-            !request.getSex().trim().equalsIgnoreCase("female") &&
-            !request.getSex().trim().equalsIgnoreCase("other")) {
-            throw new AppException(ErrorHandler.GENDER_INVALID);
         }
         if (userRepository.existsByUsername(request.getUsername().trim())) {
             throw new AppException(ErrorHandler.USERNAME_EXIST);

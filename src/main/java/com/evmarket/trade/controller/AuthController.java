@@ -32,7 +32,7 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = BaseResponse.class)))
     })
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
@@ -43,7 +43,7 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = BaseResponse.class)))
     })
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
     }
 }

@@ -11,7 +11,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long userId;
+    private int userId;
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
@@ -49,11 +49,11 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public Long getUserId() {
+    public int getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(int userId) {
         this.userId = userId;
     }
 

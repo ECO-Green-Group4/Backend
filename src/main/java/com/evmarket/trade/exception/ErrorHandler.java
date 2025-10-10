@@ -22,8 +22,6 @@ public enum ErrorHandler {
     PHONE_INVALID(400, "Số điện thoại không hợp lệ", HttpStatus.BAD_REQUEST),
     IDENTITY_CARD_INVALID(400, "CCCD/CMND không hợp lệ", HttpStatus.BAD_REQUEST),
     PASSWORD_WEAK(400, "Mật khẩu chưa đủ mạnh", HttpStatus.BAD_REQUEST),
-    PASSWORD_CONFIRM_NOT_MATCH(400, "Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST),
-    GENDER_INVALID(400, "Giới tính không hợp lệ", HttpStatus.BAD_REQUEST),
     DATE_OF_BIRTH_INVALID(400, "Ngày sinh không hợp lệ", HttpStatus.BAD_REQUEST),
     CREDENTIALS_INVALID(401, "Tài khoản hoặc mật khẩu không đúng", HttpStatus.UNAUTHORIZED);
 

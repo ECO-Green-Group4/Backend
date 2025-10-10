@@ -14,7 +14,7 @@ public class VehicleInspection {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
-    private com.evmarket.trade.entity.Vehicle vehicle;
+    private Vehicle vehicle;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inspector_id", nullable = false)
@@ -41,87 +41,24 @@ public class VehicleInspection {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Constructors
-    public VehicleInspection() {}
-
-    // Getters and Setters
-    public Long getInspectionId() { 
-        return inspectionId; 
-    }
-    
-    public void setInspectionId(Long inspectionId) { 
-        this.inspectionId = inspectionId; 
-    }
-    
-    public com.evmarket.trade.entity.Vehicle getVehicle() { 
-        return vehicle; 
-    }
-    
-    public void setVehicle(com.evmarket.trade.entity.Vehicle vehicle) { 
-        this.vehicle = vehicle; 
-    }
-    
-    public User getInspector() { 
-        return inspector; 
-    }
-    
-    public void setInspector(User inspector) { 
-        this.inspector = inspector; 
-    }
-    
-    public Integer getBatteryHealthPercent() { 
-        return batteryHealthPercent; 
-    }
-    
-    public void setBatteryHealthPercent(Integer batteryHealthPercent) { 
-        this.batteryHealthPercent = batteryHealthPercent; 
-    }
-    
-    public String getMotorCondition() { 
-        return motorCondition; 
-    }
-    
-    public void setMotorCondition(String motorCondition) { 
-        this.motorCondition = motorCondition; 
-    }
-    
-    public String getBrakeCondition() { 
-        return brakeCondition; 
-    }
-    
-    public void setBrakeCondition(String brakeCondition) { 
-        this.brakeCondition = brakeCondition; 
-    }
-    
-    public String getTireCondition() { 
-        return tireCondition; 
-    }
-    
-    public void setTireCondition(String tireCondition) { 
-        this.tireCondition = tireCondition; 
-    }
-    
-    public String getOverallCondition() { 
-        return overallCondition; 
-    }
-    
-    public void setOverallCondition(String overallCondition) { 
-        this.overallCondition = overallCondition; 
-    }
-    
-    public String getCertificationLabel() { 
-        return certificationLabel; 
-    }
-    
-    public void setCertificationLabel(String certificationLabel) { 
-        this.certificationLabel = certificationLabel; 
-    }
-    
-    public LocalDateTime getCreatedAt() { 
-        return createdAt; 
-    }
-    
-    public void setCreatedAt(LocalDateTime createdAt) { 
-        this.createdAt = createdAt; 
-    }
+    public Long getInspectionId() { return inspectionId; }
+    public void setInspectionId(Long inspectionId) { this.inspectionId = inspectionId; }
+    public Vehicle getVehicle() { return vehicle; }
+    public void setVehicle(Vehicle vehicle) { this.vehicle = vehicle; }
+    public User getInspector() { return inspector; }
+    public void setInspector(User inspector) { this.inspector = inspector; }
+    public Integer getBatteryHealthPercent() { return batteryHealthPercent; }
+    public void setBatteryHealthPercent(Integer batteryHealthPercent) { this.batteryHealthPercent = batteryHealthPercent; }
+    public String getMotorCondition() { return motorCondition; }
+    public void setMotorCondition(String motorCondition) { this.motorCondition = motorCondition; }
+    public String getBrakeCondition() { return brakeCondition; }
+    public void setBrakeCondition(String brakeCondition) { this.brakeCondition = brakeCondition; }
+    public String getTireCondition() { return tireCondition; }
+    public void setTireCondition(String tireCondition) { this.tireCondition = tireCondition; }
+    public String getOverallCondition() { return overallCondition; }
+    public void setOverallCondition(String overallCondition) { this.overallCondition = overallCondition; }
+    public String getCertificationLabel() { return certificationLabel; }
+    public void setCertificationLabel(String certificationLabel) { this.certificationLabel = certificationLabel; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
