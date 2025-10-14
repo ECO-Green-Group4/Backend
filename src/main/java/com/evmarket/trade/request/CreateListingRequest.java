@@ -1,95 +1,46 @@
-package com.evmarket.trade.entity;
+package com.evmarket.trade.request;
 
-import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "listings")
-public class Listing {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "listing_id")
-    private Long listingId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @Column(name = "item_type")
-    private String itemType; // vehicle or battery
-
-    @Column(name = "item_id")
-    private Long itemId; // FK to vehicles/batteries
-
-    @Column(name = "title")
+public class CreateListingRequest {
+    
+    @NotBlank(message = "Item type is required")
+    private String itemType; // "vehicle" or "battery"
+    
+    @NotBlank(message = "Title is required")
     private String title;
-
-    @Lob
-    @Column(name = "description")
+    
     private String description;
-
-    @Lob
-    @Column(name = "images")
+    
     private String images;
-
-    @Column(name = "location")
+    
+    @NotBlank(message = "Location is required")
     private String location;
-
-    @Column(name = "price")
+    
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be positive")
     private BigDecimal price;
-
-    @Column(name = "status")
-    private String status;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
+    
     // Vehicle fields
-    @Column(name = "brand")
     private String brand;
-
-    @Column(name = "model")
     private String model;
-
-    @Column(name = "year")
     private Integer year;
-
-    @Column(name = "battery_capacity")
     private Double batteryCapacity;
-
-    @Column(name = "mileage")
     private Integer mileage;
-
-    @Column(name = "condition")
     private String condition;
-
+    
     // Battery fields
-    @Column(name = "type")
     private String type;
-
-    @Column(name = "capacity")
     private Double capacity;
-
-    @Column(name = "health_percent")
     private Integer healthPercent;
-
-    @Column(name = "manufacture_year")
     private Integer manufactureYear;
 
     // Getters and Setters
-    public Long getListingId() { return listingId; }
-    public void setListingId(Long listingId) { this.listingId = listingId; }
-    
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-    
     public String getItemType() { return itemType; }
     public void setItemType(String itemType) { this.itemType = itemType; }
-    
-    public Long getItemId() { return itemId; }
-    public void setItemId(Long itemId) { this.itemId = itemId; }
     
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -105,12 +56,6 @@ public class Listing {
     
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
-    
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     
     // Vehicle getters/setters
     public String getBrand() { return brand; }

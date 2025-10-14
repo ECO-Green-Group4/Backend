@@ -10,6 +10,11 @@ public class AppException extends RuntimeException {
         super(errorHandler.getMessage());
         this.errorHandler = errorHandler;
     }
+    
+    public AppException(String message) {
+        super(message);
+        this.errorHandler = null;
+    }
 }
 
 

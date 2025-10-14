@@ -11,6 +11,7 @@ import com.evmarket.trade.security.JwtService;
 import com.evmarket.trade.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -47,17 +48,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseEntity<LoginResponse> login(LoginRequest request) {
-        if (!StringUtils.hasText(request.getUsername()) || !StringUtils.hasText(request.getPassword())) {
+        if (!StringUtils.hasText(request.getEmail()) || !StringUtils.hasText(request.getPassword())) {
             throw new AppException(ErrorHandler.INVALID_INPUT);
         }
-        User user = userRepository.findByUsername(request.getUsername().trim())
+        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase())
                 .orElseThrow(() -> new AppException(ErrorHandler.CREDENTIALS_INVALID));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new AppException(ErrorHandler.CREDENTIALS_INVALID);
         }
 
-        String token = jwtService.generateToken(user.getUsername(), user.getRole());
+        String token = jwtService.generateToken(user.getEmail(), user.getRole());
         LoginResponse response = LoginResponse.builder()
                 .message("Login successful")
                 .role(user.getRole())
@@ -106,6 +107,14 @@ public class AuthServiceImpl implements AuthService {
         if (request.getDateOfBirth().isAfter(java.time.LocalDate.now())) {
             throw new AppException(ErrorHandler.DATE_OF_BIRTH_INVALID);
         }
+    }
+    
+    @Override
+    public User getCurrentUser(Authentication authentication) {
+        String subject = authentication.getName();
+        // subject is email now
+        return userRepository.findByEmail(subject)
+                .orElseThrow(() -> new AppException(ErrorHandler.USER_NOT_EXISTED));
     }
 }
 
