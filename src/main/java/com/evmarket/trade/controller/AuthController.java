@@ -25,7 +25,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "User login", description = "Authenticate user and return JWT token")
+    @Operation(summary = "User login", description = "Authenticate by email and return JWT token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Login successful"),
             @ApiResponse(responseCode = "400", description = "Bad request",
@@ -33,6 +33,7 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        System.out.println("Login Request received: " + request);
         return authService.login(request);
     }
 
@@ -44,6 +45,7 @@ public class AuthController {
     })
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
+        System.out.println("Register Request received: " + request);
         return authService.register(request);
     }
 }

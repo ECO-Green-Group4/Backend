@@ -1,82 +1,37 @@
-package com.evmarket.trade.entity;
+package com.evmarket.trade.response;
 
-import jakarta.persistence.*;
+import com.evmarket.trade.entity.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "listings")
-public class Listing {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "listing_id")
+public class ListingResponse {
     private Long listingId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(name = "item_type")
-    private String itemType; // vehicle or battery
-
-    @Column(name = "item_id")
-    private Long itemId; // FK to vehicles/batteries
-
-    @Column(name = "title")
+    private String itemType;
     private String title;
-
-    @Lob
-    @Column(name = "description")
     private String description;
-
-    @Lob
-    @Column(name = "images")
     private String images;
-
-    @Column(name = "location")
     private String location;
-
-    @Column(name = "price")
     private BigDecimal price;
-
-    @Column(name = "status")
     private String status;
-
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
+    
     // Vehicle fields
-    @Column(name = "brand")
     private String brand;
-
-    @Column(name = "model")
     private String model;
-
-    @Column(name = "year")
     private Integer year;
-
-    @Column(name = "battery_capacity")
     private Double batteryCapacity;
-
-    @Column(name = "mileage")
     private Integer mileage;
-
-    @Column(name = "condition")
     private String condition;
-
+    
     // Battery fields
-    @Column(name = "type")
     private String type;
-
-    @Column(name = "capacity")
     private Double capacity;
-
-    @Column(name = "health_percent")
     private Integer healthPercent;
-
-    @Column(name = "manufacture_year")
     private Integer manufactureYear;
+
+    // Constructors
+    public ListingResponse() {}
 
     // Getters and Setters
     public Long getListingId() { return listingId; }
@@ -87,9 +42,6 @@ public class Listing {
     
     public String getItemType() { return itemType; }
     public void setItemType(String itemType) { this.itemType = itemType; }
-    
-    public Long getItemId() { return itemId; }
-    public void setItemId(Long itemId) { this.itemId = itemId; }
     
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

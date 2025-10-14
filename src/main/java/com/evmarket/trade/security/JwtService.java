@@ -62,6 +62,11 @@ public class JwtService {
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
+    public boolean isTokenValid(String token, String username) {
+        String extractedUsername = extractUsername(token);
+        return username.equals(extractedUsername) && !isTokenExpired(token);
+    }
+
     public boolean isTokenValid(String token) {
         try {
             extractAllClaims(token);
