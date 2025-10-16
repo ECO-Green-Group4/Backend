@@ -62,6 +62,5 @@ public class CreateBatteryListingRequest {
     @Positive(message = "Manufacture year must be positive")
     private Integer manufactureYear;
     
-    // Post type selection
-    private String postType; // Post Type (For Sale, Wanted, Lease...)
+    
 }
