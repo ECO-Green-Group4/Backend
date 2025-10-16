@@ -71,7 +71,6 @@ public class ListingServiceImpl implements ListingService {
                 .price(request.getPrice())
                 .status("DRAFT")
                 .createdAt(LocalDateTime.now())
-                .postType(request.getPostType())
                 // Vehicle specific fields trong listing
                 .brand(request.getBrand())
                 .model(request.getModel())
@@ -123,7 +122,6 @@ public class ListingServiceImpl implements ListingService {
                 .price(request.getPrice())
                 .status("DRAFT")
                 .createdAt(LocalDateTime.now())
-                .postType(request.getPostType())
                 // Battery specific fields trong listing
                 .batteryBrand(request.getBrand())
                 .type(request.getType())

@@ -75,6 +75,5 @@ public class CreateVehicleListingRequest {
     @NotBlank(message = "Condition is required")
     private String condition;
     
-    // Post type selection
-    private String postType; // Post Type (For Sale, Wanted, Lease...)
+    
 }

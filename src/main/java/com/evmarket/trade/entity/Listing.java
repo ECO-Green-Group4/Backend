@@ -60,9 +60,7 @@ public class Listing {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Post type from form
-    @Column(name = "post_type")
-    private String postType; // For Sale, Wanted, Lease...
+    
 
     // Vehicle specific fields from Figma form
     @Column(name = "brand")
