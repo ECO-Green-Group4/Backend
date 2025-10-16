@@ -35,7 +35,7 @@ public class ListingServiceImpl implements ListingService {
     private BatteryRepository batteryRepository;
 
     @Override
-    public Listing createVehicleListing(CreateVehicleListingRequest request, User user) {
+    public ListingResponse createVehicleListing(CreateVehicleListingRequest request, User user) {
         // Tạo Vehicle trước với tất cả các trường từ Figma form
         Vehicle vehicle = Vehicle.builder()
                 .seller(user)
@@ -87,11 +87,12 @@ public class ListingServiceImpl implements ListingService {
                 .condition(request.getCondition())
                 .build();
         
-        return listingRepository.save(listing);
+        Listing saved = listingRepository.save(listing);
+        return convertToResponse(saved);
     }
 
     @Override
-    public Listing createBatteryListing(CreateBatteryListingRequest request, User user) {
+    public ListingResponse createBatteryListing(CreateBatteryListingRequest request, User user) {
         // Tạo Battery trước với tất cả các trường từ Figma form
         Battery battery = Battery.builder()
                 .seller(user)
@@ -133,7 +134,8 @@ public class ListingServiceImpl implements ListingService {
                 .origin(request.getOrigin())
                 .build();
         
-        return listingRepository.save(listing);
+        Listing saved = listingRepository.save(listing);
+        return convertToResponse(saved);
     }
 
     @Override
@@ -232,12 +234,11 @@ public class ListingServiceImpl implements ListingService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .phone(user.getPhone())
+                // Hide phone in listing responses; expose only non-sensitive fields
                 .status(user.getStatus())
                 .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
                 .gender(user.getGender())
-                .identityCard(user.getIdentityCard())
-                .address(user.getAddress())
+                // Do NOT expose sensitive fields like identity card, password, address
                 .createdAt(user.getCreatedAt())
                 .build();
     }

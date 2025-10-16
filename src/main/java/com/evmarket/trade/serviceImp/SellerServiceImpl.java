@@ -7,6 +7,8 @@ import com.evmarket.trade.request.*;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.response.VehicleResponse;
 import com.evmarket.trade.response.BatteryResponse;
+import com.evmarket.trade.response.OrderResponse;
+import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.service.SellerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -583,12 +585,45 @@ public class SellerServiceImpl implements SellerService {
     }
     
     @Override
-    public BaseResponse<List<Order>> getOrdersForMyListings(User seller) {
+    public BaseResponse<List<OrderResponse>> getOrdersForMyListings(User seller) {
         try {
             List<Order> orders = orderRepository.findBySeller(seller);
-            return BaseResponse.success(orders, "Orders retrieved successfully");
+            List<OrderResponse> responses = orders.stream()
+                .map(this::convertToOrderResponse)
+                .toList();
+            return BaseResponse.success(responses, "Orders retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve orders: " + e.getMessage());
         }
+    }
+
+    private OrderResponse convertToOrderResponse(Order order) {
+        return OrderResponse.builder()
+                .orderId(order.getOrderId())
+                .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
+                .buyer(convertUserToUserInfo(order.getBuyer()))
+                .seller(convertUserToUserInfo(order.getSeller()))
+                .basePrice(order.getBasePrice())
+                .commissionFee(order.getCommissionFee())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .orderDate(order.getOrderDate())
+                .assignedStaffId(order.getAssignedStaffId())
+                .build();
+    }
+
+    private UserInfoResponse convertUserToUserInfo(User user) {
+        if (user == null) return null;
+        return UserInfoResponse.builder()
+                .userId((long) user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                // Hide phone, identityCard, address in seller order views
+                .status(user.getStatus())
+                .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
+                .gender(user.getGender())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

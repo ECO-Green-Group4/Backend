@@ -169,15 +169,10 @@ curl -X GET "http://localhost:8080/api/admin/listings" \
 
 #### Duyệt bài đăng (chấp nhận)
 ```bash
-curl -X PUT "http://localhost:8080/api/admin/listings/1/approve" \
+curl -X PUT "http://localhost:8080/api/admin/listings/{listingId}/status" \
   -H "Authorization: Bearer <ADMIN_JWT_TOKEN>"
 ```
 
-#### Từ chối bài đăng
-```bash
-curl -X PUT "http://localhost:8080/api/admin/listings/1/reject" \
-  -H "Authorization: Bearer <ADMIN_JWT_TOKEN>"
-```
 
 ### 5. Khách hàng mua xe
 
@@ -292,25 +287,7 @@ curl -X POST "http://localhost:8080/api/contract" \
   }'
 ```
 
-### 9. Thanh toán
 
-#### Thanh toán gói đăng tin
-```bash
-curl -X POST "http://localhost:8080/api/payment/listing-package/1" \
-  -H "Authorization: Bearer <SELLER_JWT_TOKEN>"
-```
-
-#### Thanh toán hợp đồng
-```bash
-curl -X POST "http://localhost:8080/api/payment/contract/1" \
-  -H "Authorization: Bearer <BUYER_JWT_TOKEN>"
-```
-
-#### Thanh toán dịch vụ phát sinh
-```bash
-curl -X POST "http://localhost:8080/api/payment/contract-addon/1" \
-  -H "Authorization: Bearer <BUYER_JWT_TOKEN>"
-```
 
 ### 10. Quản lý dịch vụ add-on
 
@@ -378,10 +355,7 @@ curl -X POST "http://localhost:8080/api/admin/service-packages" \
 - `POST /api/contract` - Tạo hợp đồng
 - `GET /api/contract/my-contracts` - Xem hợp đồng của tôi
 
-### Payment APIs
-- `POST /api/payment/listing-package/{id}` - Thanh toán gói đăng tin
-- `POST /api/payment/contract/{id}` - Thanh toán hợp đồng
-- `POST /api/payment/contract-addon/{id}` - Thanh toán dịch vụ phát sinh
+
 
 ## Cài đặt và chạy
 
@@ -415,3 +389,4 @@ spring.datasource.password=your_password
 - Email: support@evtrade.com
 - Phone: +84 123 456 789
 - Website: https://evtrade.com
+

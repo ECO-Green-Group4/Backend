@@ -42,6 +42,13 @@ public class SellerController {
         User seller = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(sellerService.getMyListings(seller));
     }
+
+    // Orders placed by buyers for seller's listings
+    @GetMapping("/orders")
+    public ResponseEntity<BaseResponse<?>> getOrdersForMyListings(Authentication authentication) {
+        User seller = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(sellerService.getOrdersForMyListings(seller));
+    }
 }
 
 
