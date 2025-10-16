@@ -5,6 +5,7 @@ import com.evmarket.trade.request.*;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.response.VehicleResponse;
 import com.evmarket.trade.response.BatteryResponse;
+import com.evmarket.trade.response.OrderResponse;
 
 import java.util.List;
 
@@ -43,5 +44,5 @@ public interface SellerService {
     // Order management
     BaseResponse<Void> confirmOrder(Long orderId, User seller);
     BaseResponse<Void> rejectOrder(Long orderId, User seller);
-    BaseResponse<List<Order>> getOrdersForMyListings(User seller);
+    BaseResponse<List<OrderResponse>> getOrdersForMyListings(User seller);
 }

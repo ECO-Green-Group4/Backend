@@ -10,10 +10,10 @@ import java.util.List;
 
 public interface ListingService {
     // Vehicle listing methods
-    Listing createVehicleListing(CreateVehicleListingRequest request, User user);
+    ListingResponse createVehicleListing(CreateVehicleListingRequest request, User user);
     
     // Battery listing methods
-    Listing createBatteryListing(CreateBatteryListingRequest request, User user);
+    ListingResponse createBatteryListing(CreateBatteryListingRequest request, User user);
     
     // General listing methods
     List<ListingResponse> getListingsByUser(User user);

@@ -52,4 +52,22 @@ public class ListingController {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(BaseResponse.success(listingService.updateListingStatus(listingId, status), "Listing status updated successfully"));
     }
+
+    // Lấy toàn bộ vehicle listings (cho người bán hoặc public)
+    @GetMapping("/listings/vehicle")
+    public ResponseEntity<BaseResponse<List<ListingResponse>>> getAllVehicleListings(Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(
+                BaseResponse.success(listingService.getListingsByItemType("VEHICLE"), "Vehicle listings retrieved successfully")
+        );
+    }
+
+    // Lấy toàn bộ battery listings
+    @GetMapping("/listings/battery")
+    public ResponseEntity<BaseResponse<List<ListingResponse>>> getAllBatteryListings(Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(
+                BaseResponse.success(listingService.getListingsByItemType("BATTERY"), "Battery listings retrieved successfully")
+        );
+    }
 }
