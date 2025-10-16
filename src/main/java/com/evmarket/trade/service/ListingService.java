@@ -18,6 +18,7 @@ public interface ListingService {
     // General listing methods
     List<ListingResponse> getListingsByUser(User user);
     List<ListingResponse> getAllAvailableListings();
+    List<ListingResponse> getAllListings(); // Admin method - get all listings regardless of status
     List<ListingResponse> getListingsByItemType(String itemType);
     ListingResponse getListingById(Long listingId);
     Listing updateListingStatus(Long listingId, String status);

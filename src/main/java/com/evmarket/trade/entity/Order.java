@@ -40,6 +40,9 @@ public class Order {
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
+    @Column(name = "assigned_staff_id")
+    private Long assignedStaffId;
+
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
     public User getBuyer() { return buyer; }
@@ -58,4 +61,6 @@ public class Order {
     public void setCommissionFee(BigDecimal commissionFee) { this.commissionFee = commissionFee; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public Long getAssignedStaffId() { return assignedStaffId; }
+    public void setAssignedStaffId(Long assignedStaffId) { this.assignedStaffId = assignedStaffId; }
 }

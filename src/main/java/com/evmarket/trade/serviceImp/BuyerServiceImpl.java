@@ -5,6 +5,9 @@ import com.evmarket.trade.exception.AppException;
 import com.evmarket.trade.repository.*;
 import com.evmarket.trade.request.OrderRequest;
 import com.evmarket.trade.response.common.BaseResponse;
+import com.evmarket.trade.response.OrderResponse;
+import com.evmarket.trade.response.ContactResponse;
+import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.service.BuyerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -120,7 +123,7 @@ public class BuyerServiceImpl implements BuyerService {
     
     // Order management
     @Override
-    public BaseResponse<Order> createOrder(OrderRequest request, User buyer) {
+    public BaseResponse<OrderResponse> createOrder(OrderRequest request, User buyer) {
         try {
             Listing listing = listingRepository.findById(request.getListingId())
                 .orElseThrow(() -> new AppException("Listing not found"));
@@ -155,24 +158,24 @@ public class BuyerServiceImpl implements BuyerService {
             order.setTotalAmount(totalAmount);
             
             Order savedOrder = orderRepository.save(order);
-            return BaseResponse.success(savedOrder, "Order created successfully");
+            return BaseResponse.success(convertToOrderResponse(savedOrder), "Order created successfully");
         } catch (Exception e) {
             throw new AppException("Failed to create order: " + e.getMessage());
         }
     }
     
     @Override
-    public BaseResponse<List<Order>> getMyOrders(User buyer) {
+    public BaseResponse<List<OrderResponse>> getMyOrders(User buyer) {
         try {
             List<Order> orders = orderRepository.findByBuyer(buyer);
-            return BaseResponse.success(orders, "Orders retrieved successfully");
+            return BaseResponse.success(orders.stream().map(this::convertToOrderResponse).toList(), "Orders retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve orders: " + e.getMessage());
         }
     }
     
     @Override
-    public BaseResponse<Order> getOrderById(Long orderId, User buyer) {
+    public BaseResponse<OrderResponse> getOrderById(Long orderId, User buyer) {
         try {
             Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException("Order not found"));
@@ -181,7 +184,7 @@ public class BuyerServiceImpl implements BuyerService {
                 throw new AppException("You can only view your own orders");
             }
             
-            return BaseResponse.success(order, "Order retrieved successfully");
+            return BaseResponse.success(convertToOrderResponse(order), "Order retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve order: " + e.getMessage());
         }
@@ -212,7 +215,7 @@ public class BuyerServiceImpl implements BuyerService {
     
     // Contact information (only for battery purchases)
     @Override
-    public BaseResponse<User> getSellerContactInfo(Long orderId, User buyer) {
+    public BaseResponse<ContactResponse> getSellerContactInfo(Long orderId, User buyer) {
         try {
             Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException("Order not found"));
@@ -232,16 +235,46 @@ public class BuyerServiceImpl implements BuyerService {
             }
             
             User seller = order.getSeller();
-            // Create a response with only contact information
-            User contactInfo = new User();
-            contactInfo.setFullName(seller.getFullName());
-            contactInfo.setPhone(seller.getPhone());
-            contactInfo.setEmail(seller.getEmail());
-            
-            return BaseResponse.success(contactInfo, "Seller contact information retrieved successfully");
+            ContactResponse contact = ContactResponse.builder()
+                    .fullName(seller.getFullName())
+                    .phone(seller.getPhone())
+                    .email(seller.getEmail())
+                    .build();
+            return BaseResponse.success(contact, "Seller contact information retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve contact information: " + e.getMessage());
         }
+    }
+
+    private OrderResponse convertToOrderResponse(Order order) {
+        return OrderResponse.builder()
+                .orderId(order.getOrderId())
+                .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
+                .buyer(convertUser(order.getBuyer()))
+                .seller(convertUser(order.getSeller()))
+                .basePrice(order.getBasePrice())
+                .commissionFee(order.getCommissionFee())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .orderDate(order.getOrderDate())
+                .build();
+    }
+
+    private UserInfoResponse convertUser(User user) {
+        if (user == null) return null;
+        return UserInfoResponse.builder()
+                .userId((long) user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
+                .gender(user.getGender())
+                .identityCard(user.getIdentityCard())
+                .address(user.getAddress())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }
 

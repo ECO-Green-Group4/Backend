@@ -7,6 +7,7 @@ import com.evmarket.trade.repository.OrderRepository;
 import com.evmarket.trade.repository.ListingRepository;
 import com.evmarket.trade.request.CreateOrderRequest;
 import com.evmarket.trade.response.OrderResponse;
+import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -116,20 +117,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderResponse convertToResponse(Order order) {
-        return new OrderResponse(
-                order.getOrderId(),
-                order.getListing().getListingId(),
-                order.getListing().getTitle(),
-                order.getListing().getItemType(),
-                order.getBuyer().getFullName(),
-                order.getBuyer().getPhone(),
-                order.getSeller().getFullName(),
-                order.getSeller().getPhone(),
-                order.getOrderDate(),
-                order.getStatus(),
-                order.getBasePrice(),
-                order.getCommissionFee(),
-                order.getTotalAmount()
-        );
+        return OrderResponse.builder()
+                .orderId(order.getOrderId())
+                .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
+                .buyer(convertUser(order.getBuyer()))
+                .seller(convertUser(order.getSeller()))
+                .basePrice(order.getBasePrice())
+                .commissionFee(order.getCommissionFee())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .orderDate(order.getOrderDate())
+                .build();
+    }
+
+    private UserInfoResponse convertUser(User user) {
+        if (user == null) return null;
+        return UserInfoResponse.builder()
+                .userId((long) user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
+                .gender(user.getGender())
+                .identityCard(user.getIdentityCard())
+                .address(user.getAddress())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

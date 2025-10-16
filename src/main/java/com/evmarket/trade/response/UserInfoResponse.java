@@ -11,12 +11,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContractResponse {
-    private Long contractId;
-    private Long orderId;
+public class UserInfoResponse {
+    private Long userId;
+    private String fullName;
+    private String email;
+    private String username;
+    private String phone;
     private String status;
-    private Boolean sellerSigned;
-    private Boolean buyerSigned;
-    private LocalDateTime signedAt;
+    private String dateOfBirth;
+    private String gender;
+    private String identityCard;
+    private String address;
     private LocalDateTime createdAt;
 }

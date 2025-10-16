@@ -3,6 +3,8 @@ package com.evmarket.trade.service;
 import com.evmarket.trade.entity.*;
 import com.evmarket.trade.request.OrderRequest;
 import com.evmarket.trade.response.common.BaseResponse;
+import com.evmarket.trade.response.OrderResponse;
+import com.evmarket.trade.response.ContactResponse;
 
 import java.util.List;
 
@@ -20,13 +22,13 @@ public interface BuyerService {
     BaseResponse<Battery> getBatteryDetails(Long batteryId);
     
     // Order management
-    BaseResponse<Order> createOrder(OrderRequest request, User buyer);
-    BaseResponse<List<Order>> getMyOrders(User buyer);
-    BaseResponse<Order> getOrderById(Long orderId, User buyer);
+    BaseResponse<OrderResponse> createOrder(OrderRequest request, User buyer);
+    BaseResponse<List<OrderResponse>> getMyOrders(User buyer);
+    BaseResponse<OrderResponse> getOrderById(Long orderId, User buyer);
     BaseResponse<Void> cancelOrder(Long orderId, User buyer);
     
     // Contact information (only for battery purchases)
-    BaseResponse<User> getSellerContactInfo(Long orderId, User buyer);
+    BaseResponse<ContactResponse> getSellerContactInfo(Long orderId, User buyer);
 }
 
 

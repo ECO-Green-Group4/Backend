@@ -5,6 +5,7 @@ import com.evmarket.trade.exception.AppException;
 import com.evmarket.trade.repository.*;
 import com.evmarket.trade.request.*;
 import com.evmarket.trade.response.common.BaseResponse;
+import com.evmarket.trade.response.ContractAddOnResponse;
 import com.evmarket.trade.service.AddOnServiceInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,7 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
     
     // Contract AddOn management
     @Override
-    public BaseResponse<ContractAddOn> createContractAddOn(ContractAddOnRequest request, User user) {
+    public BaseResponse<ContractAddOnResponse> createContractAddOn(ContractAddOnRequest request, User user) {
         try {
             Contract contract = contractRepository.findById(request.getContractId())
                 .orElseThrow(() -> new AppException("Contract not found"));
@@ -89,18 +90,18 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             ContractAddOn contractAddOn = new ContractAddOn();
             contractAddOn.setContract(contract);
             contractAddOn.setService(service);
-            contractAddOn.setFee(request.getFee());
+            contractAddOn.setFee(service.getDefaultFee());
             contractAddOn.setCreatedAt(LocalDateTime.now());
             
-            ContractAddOn savedContractAddOn = contractAddOnRepository.save(contractAddOn);
-            return BaseResponse.success(savedContractAddOn, "Contract add-on created successfully");
+            ContractAddOn saved = contractAddOnRepository.save(contractAddOn);
+            return BaseResponse.success(toResponse(saved), "Contract add-on created successfully");
         } catch (Exception e) {
             throw new AppException("Failed to create contract add-on: " + e.getMessage());
         }
     }
     
     @Override
-    public BaseResponse<List<ContractAddOn>> getContractAddOns(Long contractId, User user) {
+    public BaseResponse<List<ContractAddOnResponse>> getContractAddOns(Long contractId, User user) {
         try {
             Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException("Contract not found"));
@@ -112,14 +113,15 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             }
             
             List<ContractAddOn> contractAddOns = contractAddOnRepository.findByContract(contract);
-            return BaseResponse.success(contractAddOns, "Contract add-ons retrieved successfully");
+            List<ContractAddOnResponse> responses = contractAddOns.stream().map(this::toResponse).toList();
+            return BaseResponse.success(responses, "Contract add-ons retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve contract add-ons: " + e.getMessage());
         }
     }
     
     @Override
-    public BaseResponse<ContractAddOn> getContractAddOnById(Long contractAddOnId, User user) {
+    public BaseResponse<ContractAddOnResponse> getContractAddOnById(Long contractAddOnId, User user) {
         try {
             ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
                 .orElseThrow(() -> new AppException("Contract add-on not found"));
@@ -130,7 +132,7 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
                 throw new AppException("You can only view your own contract add-ons");
             }
             
-            return BaseResponse.success(contractAddOn, "Contract add-on retrieved successfully");
+            return BaseResponse.success(toResponse(contractAddOn), "Contract add-on retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve contract add-on: " + e.getMessage());
         }
@@ -153,6 +155,17 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
         } catch (Exception e) {
             throw new AppException("Failed to delete contract add-on: " + e.getMessage());
         }
+    }
+
+    private ContractAddOnResponse toResponse(ContractAddOn entity) {
+        ContractAddOnResponse r = new ContractAddOnResponse();
+        r.setId(entity.getId());
+        r.setContractId(entity.getContract() != null ? entity.getContract().getContractId() : null);
+        r.setServiceId(entity.getService() != null ? entity.getService().getServiceId() : null);
+        r.setServiceName(entity.getService() != null ? entity.getService().getName() : null);
+        r.setFee(entity.getFee());
+        r.setCreatedAt(entity.getCreatedAt());
+        return r;
     }
     
     // AddOn payment management

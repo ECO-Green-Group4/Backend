@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public class BatteryResponse {
     private Long batteryId;
     private String type;
-    private Double capacity;
+    private String capacity; // "32Ah or 2000Wh" - keep as String
     private Integer healthPercent;
     private Integer manufactureYear;
     private BigDecimal price;
@@ -18,7 +18,7 @@ public class BatteryResponse {
     // Constructors
     public BatteryResponse() {}
 
-    public BatteryResponse(Long batteryId, String type, Double capacity, Integer healthPercent,
+    public BatteryResponse(Long batteryId, String type, String capacity, Integer healthPercent,
                           Integer manufactureYear, BigDecimal price, String status,
                           LocalDateTime createdAt, String sellerName, String sellerPhone) {
         this.batteryId = batteryId;
@@ -40,8 +40,8 @@ public class BatteryResponse {
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
     
-    public Double getCapacity() { return capacity; }
-    public void setCapacity(Double capacity) { this.capacity = capacity; }
+    public String getCapacity() { return capacity; }
+    public void setCapacity(String capacity) { this.capacity = capacity; }
     
     public Integer getHealthPercent() { return healthPercent; }
     public void setHealthPercent(Integer healthPercent) { this.healthPercent = healthPercent; }

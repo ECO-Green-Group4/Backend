@@ -41,7 +41,7 @@ public class AdminInitializer implements CommandLineRunner {
         String encodedPassword = passwordEncoder.encode(rawPassword);
         admin.setPassword(encodedPassword);
         admin.setStatus("active");
-        admin.setRole("admin");
+        admin.setRole("ADMIN");
         admin.setFullName("System Administrator");
         admin.setEmail("admin@evmarket.com");
         admin.setPhone("0123456789");

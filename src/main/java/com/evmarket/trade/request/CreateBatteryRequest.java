@@ -13,9 +13,8 @@ public class CreateBatteryRequest {
     @NotBlank(message = "Type is required")
     private String type;
     
-    @NotNull(message = "Capacity is required")
-    @Positive(message = "Capacity must be positive")
-    private Double capacity;
+    @NotBlank(message = "Capacity is required")
+    private String capacity; // "32Ah or 2000Wh" - keep as String
     
     @NotNull(message = "Health percent is required")
     @Min(value = 0, message = "Health percent must be at least 0")
@@ -34,8 +33,8 @@ public class CreateBatteryRequest {
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
     
-    public Double getCapacity() { return capacity; }
-    public void setCapacity(Double capacity) { this.capacity = capacity; }
+    public String getCapacity() { return capacity; }
+    public void setCapacity(String capacity) { this.capacity = capacity; }
     
     public Integer getHealthPercent() { return healthPercent; }
     public void setHealthPercent(Integer healthPercent) { this.healthPercent = healthPercent; }

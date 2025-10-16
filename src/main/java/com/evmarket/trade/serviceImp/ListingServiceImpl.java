@@ -10,12 +10,14 @@ import com.evmarket.trade.repository.BatteryRepository;
 import com.evmarket.trade.request.CreateVehicleListingRequest;
 import com.evmarket.trade.request.CreateBatteryListingRequest;
 import com.evmarket.trade.response.ListingResponse;
+import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.service.ListingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,78 +36,104 @@ public class ListingServiceImpl implements ListingService {
 
     @Override
     public Listing createVehicleListing(CreateVehicleListingRequest request, User user) {
-        // Tạo Vehicle trước
-        Vehicle vehicle = new Vehicle();
-        vehicle.setSeller(user);
-        vehicle.setBrand(request.getBrand());
-        vehicle.setModel(request.getModel());
-        vehicle.setYear(request.getYear());
-        vehicle.setBatteryCapacity(request.getBatteryCapacity());
-        vehicle.setMileage(request.getMileage());
-        vehicle.setCondition(request.getCondition());
-        vehicle.setPrice(request.getPrice());
-        vehicle.setStatus("DRAFT");
-        vehicle.setCreatedAt(LocalDateTime.now());
+        // Tạo Vehicle trước với tất cả các trường từ Figma form
+        Vehicle vehicle = Vehicle.builder()
+                .seller(user)
+                .brand(request.getBrand())
+                .model(request.getModel())
+                .year(request.getYear())
+                .bodyType(request.getBodyType())
+                .color(request.getColor())
+                .mileage(request.getMileage())
+                .inspection(request.getInspection())
+                .origin(request.getOrigin())
+                .numberOfSeats(request.getNumberOfSeats())
+                .licensePlate(request.getLicensePlate())
+                .accessories(request.getAccessories())
+                .batteryCapacity(request.getBatteryCapacity())
+                .condition(request.getCondition())
+                .price(request.getPrice())
+                .status("DRAFT")
+                .createdAt(LocalDateTime.now())
+                .build();
         
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
         
         // Tạo Listing và reference đến Vehicle
-        Listing listing = new Listing();
-        listing.setUser(user);
-        listing.setItemType("vehicle");
-        listing.setItemId(savedVehicle.getVehicleId()); // Reference đến Vehicle
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setImages(request.getImages());
-        listing.setLocation(request.getLocation());
-        listing.setPrice(request.getPrice());
-        listing.setStatus("DRAFT");
-        listing.setCreatedAt(LocalDateTime.now());
-        
-        // Set vehicle specific fields trong listing
-        listing.setBrand(request.getBrand());
-        listing.setModel(request.getModel());
-        listing.setYear(request.getYear());
-        listing.setBatteryCapacity(request.getBatteryCapacity());
-        listing.setMileage(request.getMileage());
-        listing.setCondition(request.getCondition());
+        Listing listing = Listing.builder()
+                .user(user)
+                .itemType("vehicle")
+                .itemId(savedVehicle.getVehicleId())
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .images(request.getImages())
+                .location(request.getLocation())
+                .price(request.getPrice())
+                .status("DRAFT")
+                .createdAt(LocalDateTime.now())
+                .postType(request.getPostType())
+                // Vehicle specific fields trong listing
+                .brand(request.getBrand())
+                .model(request.getModel())
+                .year(request.getYear())
+                .bodyType(request.getBodyType())
+                .color(request.getColor())
+                .mileage(request.getMileage())
+                .inspection(request.getInspection())
+                .origin(request.getOrigin())
+                .numberOfSeats(request.getNumberOfSeats())
+                .licensePlate(request.getLicensePlate())
+                .accessories(request.getAccessories())
+                .batteryCapacity(request.getBatteryCapacity())
+                .condition(request.getCondition())
+                .build();
         
         return listingRepository.save(listing);
     }
 
     @Override
     public Listing createBatteryListing(CreateBatteryListingRequest request, User user) {
-        // Tạo Battery trước
-        Battery battery = new Battery();
-        battery.setSeller(user);
-        battery.setType(request.getType());
-        battery.setCapacity(request.getCapacity());
-        battery.setHealthPercent(request.getHealthPercent());
-        battery.setManufactureYear(request.getManufactureYear());
-        battery.setPrice(request.getPrice());
-        battery.setStatus("DRAFT");
-        battery.setCreatedAt(LocalDateTime.now());
+        // Tạo Battery trước với tất cả các trường từ Figma form
+        Battery battery = Battery.builder()
+                .seller(user)
+                .brand(request.getBrand())
+                .type(request.getType())
+                .capacity(request.getCapacity())
+                .healthPercent(request.getHealthPercent())
+                .manufactureYear(request.getManufactureYear())
+                .voltage(request.getVoltage())
+                .chargeCycles(request.getChargeCycles())
+                .origin(request.getOrigin())
+                .price(request.getPrice())
+                .status("DRAFT")
+                .createdAt(LocalDateTime.now())
+                .build();
         
         Battery savedBattery = batteryRepository.save(battery);
         
         // Tạo Listing và reference đến Battery
-        Listing listing = new Listing();
-        listing.setUser(user);
-        listing.setItemType("battery");
-        listing.setItemId(savedBattery.getBatteryId()); // Reference đến Battery
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setImages(request.getImages());
-        listing.setLocation(request.getLocation());
-        listing.setPrice(request.getPrice());
-        listing.setStatus("DRAFT");
-        listing.setCreatedAt(LocalDateTime.now());
-        
-        // Set battery specific fields trong listing
-        listing.setType(request.getType());
-        listing.setCapacity(request.getCapacity());
-        listing.setHealthPercent(request.getHealthPercent());
-        listing.setManufactureYear(request.getManufactureYear());
+        Listing listing = Listing.builder()
+                .user(user)
+                .itemType("battery")
+                .itemId(savedBattery.getBatteryId())
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .images(request.getImages())
+                .location(request.getLocation())
+                .price(request.getPrice())
+                .status("DRAFT")
+                .createdAt(LocalDateTime.now())
+                .postType(request.getPostType())
+                // Battery specific fields trong listing
+                .batteryBrand(request.getBrand())
+                .type(request.getType())
+                .capacity(request.getCapacity())
+                .healthPercent(request.getHealthPercent())
+                .manufactureYear(request.getManufactureYear())
+                .voltage(request.getVoltage())
+                .chargeCycles(request.getChargeCycles())
+                .origin(request.getOrigin())
+                .build();
         
         return listingRepository.save(listing);
     }
@@ -123,6 +151,15 @@ public class ListingServiceImpl implements ListingService {
     @Transactional(readOnly = true)
     public List<ListingResponse> getAllAvailableListings() {
         List<Listing> listings = listingRepository.findByStatus("ACTIVE");
+        return listings.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ListingResponse> getAllListings() {
+        List<Listing> listings = listingRepository.findAll();
         return listings.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
@@ -156,7 +193,7 @@ public class ListingServiceImpl implements ListingService {
     private ListingResponse convertToResponse(Listing listing) {
         ListingResponse response = new ListingResponse();
         response.setListingId(listing.getListingId());
-        response.setUser(listing.getUser());
+        response.setUser(convertUserToUserInfoResponse(listing.getUser()));
         response.setItemType(listing.getItemType());
         response.setTitle(listing.getTitle());
         response.setDescription(listing.getDescription());
@@ -185,5 +222,25 @@ public class ListingServiceImpl implements ListingService {
         }
         
         return response;
+    }
+    
+    private UserInfoResponse convertUserToUserInfoResponse(User user) {
+        if (user == null) {
+            return null;
+        }
+        
+        return UserInfoResponse.builder()
+                .userId((long) user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
+                .gender(user.getGender())
+                .identityCard(user.getIdentityCard())
+                .address(user.getAddress())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

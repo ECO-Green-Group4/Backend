@@ -25,4 +25,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     @Query("SELECT o FROM Order o WHERE o.listing = :listing AND o.status = 'PENDING'")
     List<Order> findPendingByListing(@Param("listing") Listing listing);
+    
+    List<Order> findByAssignedStaffId(Long staffId);
 }
