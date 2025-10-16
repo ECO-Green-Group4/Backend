@@ -1,16 +1,18 @@
 package com.evmarket.trade.service;
 
-import com.evmarket.trade.entity.Payment;
 import com.evmarket.trade.entity.User;
-import com.evmarket.trade.request.CreatePaymentRequest;
+import com.evmarket.trade.response.PaymentResponse;
+import com.evmarket.trade.response.common.BaseResponse;
 
 import java.util.List;
 
 public interface PaymentService {
-    Payment createPayment(CreatePaymentRequest request, User payer);
-    List<Payment> getPaymentsByUser(User user);
-    Payment getPaymentById(Long paymentId);
-    Payment updatePaymentStatus(Long paymentId, String status);
-    void processPackagePayment(Long listingPackageId, User user);
-    void processContractAddOnPayment(Long contractAddOnId, User user);
+    BaseResponse<PaymentResponse> payListingPackage(Long listingPackageId, User payer);
+    BaseResponse<PaymentResponse> payContract(Long contractId, User payer);
+    BaseResponse<PaymentResponse> payContractAddOn(Long contractAddOnId, User payer);
+
+    BaseResponse<List<PaymentResponse>> getMyPayments(User user);
+    BaseResponse<List<PaymentResponse>> getPaymentsByContract(Long contractId, User user);
+    BaseResponse<List<PaymentResponse>> getPaymentsByListingPackage(Long listingPackageId, User user);
 }
+

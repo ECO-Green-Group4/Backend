@@ -3,7 +3,6 @@ package com.evmarket.trade.request;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.math.BigDecimal;
 
 @Data
 public class ContractAddOnRequest {
@@ -14,8 +13,7 @@ public class ContractAddOnRequest {
     @NotNull(message = "Service ID is required")
     private Long serviceId;
     
-    @NotNull(message = "Fee is required")
-    private BigDecimal fee;
+    // Fee will be taken from AddOnService.defaultFee
 }
 
 

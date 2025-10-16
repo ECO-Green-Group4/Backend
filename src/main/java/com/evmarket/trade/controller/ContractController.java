@@ -29,10 +29,10 @@ public class ContractController {
         return ResponseEntity.ok(contractService.generateContract(orderId, user));
     }
     
-    @GetMapping("/order/{orderId}")
-    public ResponseEntity<BaseResponse<?>> getContractByOrderId(@PathVariable Long orderId, Authentication authentication) {
+    @GetMapping("/orders")
+    public ResponseEntity<BaseResponse<?>> getContractsOfMyOrders(Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(contractService.getContractByOrderId(orderId, user));
+        return ResponseEntity.ok(contractService.getContractsOfMyOrders(user));
     }
     
     @GetMapping("/{contractId}")

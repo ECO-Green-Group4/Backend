@@ -1,11 +1,20 @@
 package com.evmarket.trade.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "batteries")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Battery {
 
     @Id
@@ -17,14 +26,18 @@ public class Battery {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
+    // Basic battery fields
+    @Column(name = "brand")
+    private String brand; // Battery Brand (VinFast, CATL, LG...)
+
     @Column(name = "type")
-    private String type;
+    private String type; // Battery Type
 
     @Column(name = "capacity")
-    private Double capacity;
+    private String capacity; // "32Ah or 2000Wh" - keep as String
 
     @Column(name = "health_percent")
-    private Integer healthPercent;
+    private Integer healthPercent; // SoH (%)
 
     @Column(name = "manufacture_year")
     private Integer manufactureYear;
@@ -38,22 +51,16 @@ public class Battery {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public Long getBatteryId() { return batteryId; }
-    public void setBatteryId(Long batteryId) { this.batteryId = batteryId; }
-    public User getSeller() { return seller; }
-    public void setSeller(User seller) { this.seller = seller; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public Double getCapacity() { return capacity; }
-    public void setCapacity(Double capacity) { this.capacity = capacity; }
-    public Integer getHealthPercent() { return healthPercent; }
-    public void setHealthPercent(Integer healthPercent) { this.healthPercent = healthPercent; }
-    public Integer getManufactureYear() { return manufactureYear; }
-    public void setManufactureYear(Integer manufactureYear) { this.manufactureYear = manufactureYear; }
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // New fields from Figma form
+    @Column(name = "voltage")
+    private Double voltage; // Voltage (V) - default 72
+
+    @Column(name = "charge_cycles")
+    private Integer chargeCycles; // Charge Cycles - default 300
+
+    @Column(name = "origin")
+    private String origin; // Origin (China, Vietnam, Korea...)
 }

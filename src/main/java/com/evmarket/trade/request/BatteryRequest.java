@@ -11,9 +11,8 @@ public class BatteryRequest {
     @NotBlank(message = "Type is required")
     private String type;
     
-    @NotNull(message = "Capacity is required")
-    @DecimalMin(value = "0.0", message = "Capacity must be positive")
-    private Double capacity;
+    @NotBlank(message = "Capacity is required")
+    private String capacity; // "32Ah or 2000Wh" - keep as String
     
     @NotNull(message = "Health percent is required")
     @Min(value = 0, message = "Health percent must be between 0-100")

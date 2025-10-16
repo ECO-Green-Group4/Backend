@@ -7,6 +7,7 @@ import com.evmarket.trade.repository.ContractRepository;
 import com.evmarket.trade.repository.OrderRepository;
 import com.evmarket.trade.request.ContractSignRequest;
 import com.evmarket.trade.response.common.BaseResponse;
+import com.evmarket.trade.response.ContractResponse;
 import com.evmarket.trade.service.ContractService;
 import com.evmarket.trade.util.OTPUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class ContractServiceImpl implements ContractService {
     private final Map<Long, String> otpStorage = new HashMap<>();
 
     @Override
-    public BaseResponse<Contract> generateContract(Long orderId, User user) {
+    public BaseResponse<ContractResponse> generateContract(Long orderId, User user) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
@@ -55,7 +56,7 @@ public class ContractServiceImpl implements ContractService {
             contract.setSignedAt(LocalDateTime.now());
             
             Contract savedContract = contractRepository.save(contract);
-            return BaseResponse.success(savedContract, "Contract generated successfully");
+            return BaseResponse.success(convertToResponse(savedContract), "Contract generated successfully");
             
         } catch (Exception e) {
             return BaseResponse.error("Failed to generate contract: " + e.getMessage());
@@ -63,31 +64,23 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public BaseResponse<Contract> getContractByOrderId(Long orderId, User user) {
+    public BaseResponse<java.util.List<ContractResponse>> getContractsOfMyOrders(User user) {
         try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-            
-            Contract contract = contractRepository.findByOrder(order);
-            if (contract == null) {
-                throw new RuntimeException("Contract not found for this order");
-            }
-            
-            // Check if user is authorized
-            if (user.getUserId() != order.getBuyer().getUserId() && 
-                user.getUserId() != order.getSeller().getUserId()) {
-                throw new RuntimeException("User is not authorized to view this contract");
-            }
-            
-            return BaseResponse.success(contract, "Contract retrieved successfully");
-            
+            java.util.List<Contract> contracts = contractRepository.findAll().stream()
+                    .filter(c -> {
+                        Order o = c.getOrder();
+                        return o != null && (user.getUserId() == o.getBuyer().getUserId() || user.getUserId() == o.getSeller().getUserId());
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            java.util.List<ContractResponse> responses = contracts.stream().map(this::convertToResponse).collect(java.util.stream.Collectors.toList());
+            return BaseResponse.success(responses, "Contracts of my orders retrieved successfully");
         } catch (Exception e) {
-            return BaseResponse.error("Failed to get contract: " + e.getMessage());
+            return BaseResponse.error("Failed to get contracts: " + e.getMessage());
         }
     }
 
     @Override
-    public BaseResponse<Contract> getContractById(Long contractId, User user) {
+    public BaseResponse<ContractResponse> getContractById(Long contractId, User user) {
         try {
             Contract contract = contractRepository.findById(contractId)
                     .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
@@ -99,7 +92,7 @@ public class ContractServiceImpl implements ContractService {
                 throw new RuntimeException("User is not authorized to view this contract");
             }
             
-            return BaseResponse.success(contract, "Contract retrieved successfully");
+            return BaseResponse.success(convertToResponse(contract), "Contract retrieved successfully");
             
         } catch (Exception e) {
             return BaseResponse.error("Failed to get contract: " + e.getMessage());
@@ -107,7 +100,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public BaseResponse<Contract> signContract(ContractSignRequest request, User user) {
+    public BaseResponse<ContractResponse> signContract(ContractSignRequest request, User user) {
         try {
             Contract contract = contractRepository.findById(request.getContractId())
                     .orElseThrow(() -> new RuntimeException("Contract not found with id: " + request.getContractId()));
@@ -135,8 +128,7 @@ public class ContractServiceImpl implements ContractService {
             
             contract.setSignedAt(LocalDateTime.now());
             Contract savedContract = contractRepository.save(contract);
-            
-            return BaseResponse.success(savedContract, "Contract signed successfully");
+            return BaseResponse.success(convertToResponse(savedContract), "Contract signed successfully");
             
         } catch (Exception e) {
             return BaseResponse.error("Failed to sign contract: " + e.getMessage());
@@ -165,7 +157,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public BaseResponse<List<Contract>> getMyContracts(User user) {
+    public BaseResponse<List<ContractResponse>> getMyContracts(User user) {
         try {
             // Get contracts where user is either buyer or seller
             List<Contract> contracts = contractRepository.findAll().stream()
@@ -176,7 +168,8 @@ public class ContractServiceImpl implements ContractService {
                     })
                     .collect(Collectors.toList());
             
-            return BaseResponse.success(contracts, "Contracts retrieved successfully");
+            List<ContractResponse> responses = contracts.stream().map(this::convertToResponse).collect(Collectors.toList());
+            return BaseResponse.success(responses, "Contracts retrieved successfully");
             
         } catch (Exception e) {
             return BaseResponse.error("Failed to get contracts: " + e.getMessage());
@@ -222,5 +215,21 @@ public class ContractServiceImpl implements ContractService {
     private boolean verifyOTP(Long contractId, String otp) {
         String storedOTP = otpStorage.get(contractId);
         return storedOTP != null && storedOTP.equals(otp);
+    }
+
+    private ContractResponse convertToResponse(Contract contract) {
+        if (contract == null) return null;
+        Order order = contract.getOrder();
+        boolean sellerSigned = "SELLER_SIGNED".equals(contract.getContractStatus()) || "SIGNED".equals(contract.getContractStatus());
+        boolean buyerSigned = "BUYER_SIGNED".equals(contract.getContractStatus()) || "SIGNED".equals(contract.getContractStatus());
+        return ContractResponse.builder()
+                .contractId(contract.getContractId())
+                .orderId(order != null ? order.getOrderId() : null)
+                .status(contract.getContractStatus())
+                .sellerSigned(sellerSigned)
+                .buyerSigned(buyerSigned)
+                .signedAt(contract.getSignedAt())
+                .createdAt(contract.getSignedAt())
+                .build();
     }
 }

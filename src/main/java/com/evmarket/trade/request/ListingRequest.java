@@ -3,6 +3,8 @@ package com.evmarket.trade.request;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ListingRequest {
     
@@ -21,7 +23,7 @@ public class ListingRequest {
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
     
-    private String images; // JSON string of image URLs
+    private List<String> images; // List of image URLs
     
     @NotBlank(message = "Location is required")
     private String location;

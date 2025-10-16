@@ -3,16 +3,27 @@ package com.evmarket.trade.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CreateBatteryListingRequest {
     
+    // General listing fields
     @NotBlank(message = "Title is required")
     private String title;
     
     private String description;
     
-    private String images;
+    private List<String> images; // Changed to List<String> for multiple images
     
     @NotBlank(message = "Location is required")
     private String location;
@@ -21,47 +32,36 @@ public class CreateBatteryListingRequest {
     @Positive(message = "Price must be positive")
     private BigDecimal price;
     
-    // Battery specific fields
-    @NotBlank(message = "Type is required")
-    private String type;
+    // Battery specific fields from Figma form
+    @NotBlank(message = "Battery brand is required")
+    private String brand; // Battery Brand (VinFast, CATL, LG...)
     
-    @NotNull(message = "Capacity is required")
-    @Positive(message = "Capacity must be positive")
-    private Double capacity;
+    @NotNull(message = "Voltage is required")
+    @Positive(message = "Voltage must be positive")
+    private Double voltage; // Voltage (V) - default 72
     
-    @NotNull(message = "Health percent is required")
-    @Positive(message = "Health percent must be positive")
-    private Integer healthPercent;
+    @NotBlank(message = "Capacity is required")
+    private String capacity; // Capacity (Ah / Wh) - "32Ah or 2000Wh"
     
+    @NotNull(message = "State of Health (SoH) is required")
+    @Positive(message = "State of Health must be positive")
+    private Integer healthPercent; // SoH (%) - default 85
+    
+    @NotNull(message = "Charge cycles is required")
+    @Positive(message = "Charge cycles must be positive")
+    private Integer chargeCycles; // Charge Cycles - default 300
+    
+    @NotBlank(message = "Battery type is required")
+    private String type; // Battery Type (Select Type)
+    
+    @NotBlank(message = "Origin is required")
+    private String origin; // Origin (China, Vietnam, Korea...)
+    
+    // Additional battery fields
     @NotNull(message = "Manufacture year is required")
     @Positive(message = "Manufacture year must be positive")
     private Integer manufactureYear;
-
-    // Getters and Setters
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
     
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    
-    public String getImages() { return images; }
-    public void setImages(String images) { this.images = images; }
-    
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
-    
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    
-    public Double getCapacity() { return capacity; }
-    public void setCapacity(Double capacity) { this.capacity = capacity; }
-    
-    public Integer getHealthPercent() { return healthPercent; }
-    public void setHealthPercent(Integer healthPercent) { this.healthPercent = healthPercent; }
-    
-    public Integer getManufactureYear() { return manufactureYear; }
-    public void setManufactureYear(Integer manufactureYear) { this.manufactureYear = manufactureYear; }
+    // Post type selection
+    private String postType; // Post Type (For Sale, Wanted, Lease...)
 }
