@@ -4,9 +4,14 @@ import com.evmarket.trade.entity.Listing;
 import com.evmarket.trade.entity.User;
 import com.evmarket.trade.entity.Vehicle;
 import com.evmarket.trade.entity.Battery;
+import com.evmarket.trade.entity.ListingPackage;
+import com.evmarket.trade.entity.ServicePackage;
 import com.evmarket.trade.repository.ListingRepository;
 import com.evmarket.trade.repository.VehicleRepository;
 import com.evmarket.trade.repository.BatteryRepository;
+import com.evmarket.trade.repository.ListingPackageRepository;
+import com.evmarket.trade.repository.ServicePackageRepository;
+import com.evmarket.trade.exception.AppException;
 import com.evmarket.trade.request.CreateVehicleListingRequest;
 import com.evmarket.trade.request.CreateBatteryListingRequest;
 import com.evmarket.trade.response.ListingResponse;
@@ -33,9 +38,23 @@ public class ListingServiceImpl implements ListingService {
     
     @Autowired
     private BatteryRepository batteryRepository;
+    
+    @Autowired
+    private ListingPackageRepository listingPackageRepository;
+    
+    @Autowired
+    private ServicePackageRepository servicePackageRepository;
 
     @Override
     public ListingResponse createVehicleListing(CreateVehicleListingRequest request, User user) {
+        // Validate listing package exists and is active
+        ServicePackage servicePackage = servicePackageRepository.findById(request.getPackageId())
+                .orElseThrow(() -> new AppException("Service package not found"));
+        
+        if (!"ACTIVE".equals(servicePackage.getStatus())) {
+            throw new AppException("Selected service package is not active");
+        }
+        
         // Tạo Vehicle trước với tất cả các trường từ Figma form
         Vehicle vehicle = Vehicle.builder()
                 .seller(user)
@@ -71,6 +90,7 @@ public class ListingServiceImpl implements ListingService {
                 .price(request.getPrice())
                 .status("DRAFT")
                 .createdAt(LocalDateTime.now())
+                .postType(servicePackage.getName()) // Set post type from package name
                 // Vehicle specific fields trong listing
                 .brand(request.getBrand())
                 .model(request.getModel())
@@ -88,11 +108,37 @@ public class ListingServiceImpl implements ListingService {
                 .build();
         
         Listing saved = listingRepository.save(listing);
-        return convertToResponse(saved);
+        
+        // Create ListingPackage to link listing with service package
+        ListingPackage listingPackage = new ListingPackage();
+        listingPackage.setListing(saved);
+        listingPackage.setServicePackage(servicePackage);
+        listingPackage.setUser(user);
+        listingPackage.setAppliedAt(LocalDateTime.now());
+        listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays()));
+        listingPackage.setStatus("PENDING_PAYMENT");
+        ListingPackage savedListingPackage = listingPackageRepository.save(listingPackage);
+        
+        // Convert to response and include listing package info
+        ListingResponse response = convertToResponse(saved);
+        response.setListingPackageId(savedListingPackage.getListingPackageId());
+        response.setPackageAmount(savedListingPackage.getServicePackage().getListingFee());
+        response.setPackageStatus(savedListingPackage.getStatus());
+        response.setPackageExpiredAt(savedListingPackage.getExpiredAt());
+        
+        return response;
     }
 
     @Override
     public ListingResponse createBatteryListing(CreateBatteryListingRequest request, User user) {
+        // Validate listing package exists and is active
+        ServicePackage servicePackage = servicePackageRepository.findById(request.getPackageId())
+                .orElseThrow(() -> new AppException("Service package not found"));
+        
+        if (!"ACTIVE".equals(servicePackage.getStatus())) {
+            throw new AppException("Selected service package is not active");
+        }
+        
         // Tạo Battery trước với tất cả các trường từ Figma form
         Battery battery = Battery.builder()
                 .seller(user)
@@ -123,6 +169,7 @@ public class ListingServiceImpl implements ListingService {
                 .price(request.getPrice())
                 .status("DRAFT")
                 .createdAt(LocalDateTime.now())
+                .postType(servicePackage.getName()) // Set post type from package name
                 // Battery specific fields trong listing
                 .batteryBrand(request.getBrand())
                 .type(request.getType())
@@ -135,7 +182,25 @@ public class ListingServiceImpl implements ListingService {
                 .build();
         
         Listing saved = listingRepository.save(listing);
-        return convertToResponse(saved);
+        
+        // Create ListingPackage to link listing with service package
+        ListingPackage listingPackage = new ListingPackage();
+        listingPackage.setListing(saved);
+        listingPackage.setServicePackage(servicePackage);
+        listingPackage.setUser(user);
+        listingPackage.setAppliedAt(LocalDateTime.now());
+        listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays()));
+        listingPackage.setStatus("PENDING_PAYMENT");
+        ListingPackage savedListingPackage = listingPackageRepository.save(listingPackage);
+        
+        // Convert to response and include listing package info
+        ListingResponse response = convertToResponse(saved);
+        response.setListingPackageId(savedListingPackage.getListingPackageId());
+        response.setPackageAmount(savedListingPackage.getServicePackage().getListingFee());
+        response.setPackageStatus(savedListingPackage.getStatus());
+        response.setPackageExpiredAt(savedListingPackage.getExpiredAt());
+        
+        return response;
     }
 
     @Override
@@ -189,6 +254,7 @@ public class ListingServiceImpl implements ListingService {
         listing.setStatus(status);
         return listingRepository.save(listing);
     }
+    
 
     private ListingResponse convertToResponse(Listing listing) {
         ListingResponse response = new ListingResponse();
@@ -202,6 +268,7 @@ public class ListingServiceImpl implements ListingService {
         response.setPrice(listing.getPrice());
         response.setStatus(listing.getStatus());
         response.setCreatedAt(listing.getCreatedAt());
+        response.setPostType(listing.getPostType());
         
         // Set vehicle specific fields
         if ("vehicle".equals(listing.getItemType())) {

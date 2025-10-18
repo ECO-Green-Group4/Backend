@@ -24,6 +24,13 @@ public class ListingResponse {
     private BigDecimal price;
     private String status;
     private LocalDateTime createdAt;
+    private String postType;
+    
+    // ListingPackage info for payment
+    private Long listingPackageId;
+    private BigDecimal packageAmount;
+    private String packageStatus;
+    private LocalDateTime packageExpiredAt;
     
     // Vehicle fields
     private String brand;

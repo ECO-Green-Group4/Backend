@@ -479,6 +479,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             ServicePackage sp = new ServicePackage();
             sp.setName(request.getName());
+            sp.setPackageType(ServicePackage.PackageType.valueOf(request.getPackageType()));
             sp.setListingLimit(request.getListingLimit());
             sp.setListingFee(request.getListingFee());
             sp.setHighlight(request.getHighlight());
@@ -499,6 +500,7 @@ public class AdminServiceImpl implements AdminService {
             ServicePackage sp = servicePackageRepository.findById(packageId)
                     .orElseThrow(() -> new AppException("Service package not found"));
             if (request.getName() != null) sp.setName(request.getName());
+            if (request.getPackageType() != null) sp.setPackageType(ServicePackage.PackageType.valueOf(request.getPackageType()));
             if (request.getListingLimit() != null) sp.setListingLimit(request.getListingLimit());
             if (request.getListingFee() != null) sp.setListingFee(request.getListingFee());
             if (request.getHighlight() != null) sp.setHighlight(request.getHighlight());
@@ -536,5 +538,6 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Failed to delete service package: " + e.getMessage());
         }
     }
+
 }
 

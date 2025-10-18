@@ -222,7 +222,7 @@ public class AdminController {
     }
 
     // Service Package (membership) CRUD
-    @PostMapping("/packages")
+    @PostMapping("/memberships")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<?>> createServicePackage(@RequestBody CreateServicePackageRequest request,
                                                                 Authentication authentication) {
@@ -230,7 +230,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.createServicePackage(request, admin));
     }
 
-    @PutMapping("/packages/{packageId}")
+    @PutMapping("/memberships/{packageId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<?>> updateServicePackage(@PathVariable Long packageId,
                                                                 @RequestBody UpdateServicePackageRequest request,
@@ -239,19 +239,20 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateServicePackage(packageId, request, admin));
     }
 
-    @GetMapping("/packages")
+    @GetMapping("/memberships")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<?>> getAllServicePackages(Authentication authentication) {
         User admin = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(adminService.getAllServicePackages(admin));
     }
 
-    @DeleteMapping("/packages/{packageId}")
+    @DeleteMapping("/memberships/{packageId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<?>> deleteServicePackage(@PathVariable Long packageId,
                                                                 Authentication authentication) {
         User admin = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(adminService.deleteServicePackage(packageId, admin));
     }
+
 }
 

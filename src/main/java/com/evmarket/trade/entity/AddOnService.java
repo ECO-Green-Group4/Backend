@@ -12,17 +12,16 @@ public class AddOnService {
     @Column(name = "service_id")
     private Long serviceId;
 
-    @Column(name = "name")
+    @Column(name = "name", columnDefinition = "nvarchar(255)")
     private String name;
 
-    @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "nvarchar(MAX)")
     private String description;
 
     @Column(name = "default_fee")
     private BigDecimal defaultFee;
 
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "nvarchar(50)")
     private String status;
 
     public Long getServiceId() { return serviceId; }

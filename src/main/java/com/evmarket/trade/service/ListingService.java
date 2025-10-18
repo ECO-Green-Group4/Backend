@@ -22,4 +22,5 @@ public interface ListingService {
     List<ListingResponse> getListingsByItemType(String itemType);
     ListingResponse getListingById(Long listingId);
     Listing updateListingStatus(Long listingId, String status);
+    
 }

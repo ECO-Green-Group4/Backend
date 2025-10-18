@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public class CreateServicePackageRequest {
     private String name;
+    private String packageType; // LISTING_VIP | MEMBERSHIP
     private Integer listingLimit;
     private BigDecimal listingFee;
     private Boolean highlight;
@@ -13,6 +14,8 @@ public class CreateServicePackageRequest {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getPackageType() { return packageType; }
+    public void setPackageType(String packageType) { this.packageType = packageType; }
     public Integer getListingLimit() { return listingLimit; }
     public void setListingLimit(Integer listingLimit) { this.listingLimit = listingLimit; }
     public BigDecimal getListingFee() { return listingFee; }

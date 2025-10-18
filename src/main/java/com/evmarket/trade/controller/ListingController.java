@@ -1,12 +1,14 @@
 package com.evmarket.trade.controller;
 
 import com.evmarket.trade.entity.User;
+import com.evmarket.trade.entity.ServicePackage;
 import com.evmarket.trade.request.CreateVehicleListingRequest;
 import com.evmarket.trade.request.CreateBatteryListingRequest;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.response.ListingResponse;
 import com.evmarket.trade.service.ListingService;
 import com.evmarket.trade.service.AuthService;
+import com.evmarket.trade.repository.ServicePackageRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,9 @@ public class ListingController {
     
     @Autowired
     private AuthService authService;
+    
+    @Autowired
+    private ServicePackageRepository servicePackageRepository;
     
     // Vehicle listing endpoints
     @PostMapping("/listings/vehicle")
@@ -70,4 +75,17 @@ public class ListingController {
                 BaseResponse.success(listingService.getListingsByItemType("BATTERY"), "Battery listings retrieved successfully")
         );
     }
+    
+    // Get available service packages for listing creation
+    @GetMapping("/packages")
+    public ResponseEntity<BaseResponse<List<ServicePackage>>> getAvailablePackages(Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        List<ServicePackage> packages = servicePackageRepository.findAll().stream()
+                .filter(pkg -> "ACTIVE".equals(pkg.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(
+                BaseResponse.success(packages, "Available service packages retrieved successfully")
+        );
+    }
+    
 }

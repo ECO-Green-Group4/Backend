@@ -23,19 +23,19 @@ public class VehicleInspection {
     @Column(name = "battery_health_percent")
     private Integer batteryHealthPercent;
 
-    @Column(name = "motor_condition")
+    @Column(name = "motor_condition", columnDefinition = "nvarchar")
     private String motorCondition;
 
-    @Column(name = "brake_condition")
+    @Column(name = "brake_condition", columnDefinition = "nvarchar")
     private String brakeCondition;
 
-    @Column(name = "tire_condition")
+    @Column(name = "tire_condition", columnDefinition = "nvarchar")
     private String tireCondition;
 
-    @Column(name = "overall_condition")
+    @Column(name = "overall_condition", columnDefinition = "nvarchar")
     private String overallCondition;
 
-    @Column(name = "certification_label")
+    @Column(name = "certification_label", columnDefinition = "nvarchar")
     private String certificationLabel;
 
     @Column(name = "created_at")

@@ -62,5 +62,6 @@ public class CreateBatteryListingRequest {
     @Positive(message = "Manufacture year must be positive")
     private Integer manufactureYear;
     
-    
+    @NotNull(message = "Package ID is required")
+    private Long packageId;
 }
