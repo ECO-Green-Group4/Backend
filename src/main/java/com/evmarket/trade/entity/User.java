@@ -49,6 +49,15 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "current_membership_id")
+    private Long currentMembershipId;
+
+    @Column(name = "membership_expiry")
+    private LocalDateTime membershipExpiry;
+
+    @Column(name = "available_coupons")
+    private Integer availableCoupons;
+
     public int getUserId() {
         return userId;
     }
@@ -152,4 +161,13 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Long getCurrentMembershipId() { return currentMembershipId; }
+    public void setCurrentMembershipId(Long currentMembershipId) { this.currentMembershipId = currentMembershipId; }
+
+    public LocalDateTime getMembershipExpiry() { return membershipExpiry; }
+    public void setMembershipExpiry(LocalDateTime membershipExpiry) { this.membershipExpiry = membershipExpiry; }
+
+    public Integer getAvailableCoupons() { return availableCoupons; }
+    public void setAvailableCoupons(Integer availableCoupons) { this.availableCoupons = availableCoupons; }
 }

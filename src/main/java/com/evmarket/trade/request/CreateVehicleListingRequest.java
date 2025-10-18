@@ -75,5 +75,6 @@ public class CreateVehicleListingRequest {
     @NotBlank(message = "Condition is required")
     private String condition;
     
-    
+    @NotNull(message = "Package ID is required")
+    private Long packageId;
 }

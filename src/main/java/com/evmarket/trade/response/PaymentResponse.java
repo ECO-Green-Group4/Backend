@@ -14,16 +14,17 @@ import java.time.LocalDateTime;
 @Builder
 public class PaymentResponse {
     private Long paymentId;
-    private Long contractId;         // null nếu là payment gói đăng tin
-    private Long listingPackageId;   // null nếu là payment hợp đồng / add-on
-    private Long payerId;
-    private String payerName;
-    private String paymentMethod;
+    private String paymentType;
     private BigDecimal amount;
+    private String currency;
     private String status;
+    private String paymentUrl; // URL để redirect đến VNPay
     private LocalDateTime paymentDate;
+    private LocalDateTime expiryTime;
+    private String gatewayTransactionId;
+
+    // Additional info
+    private Long contractId;
+    private Long contractAddOnId;
+    private Long listingPackageId;
 }
-
-
-
-

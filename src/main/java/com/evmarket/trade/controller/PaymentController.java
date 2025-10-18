@@ -1,11 +1,13 @@
 package com.evmarket.trade.controller;
 
 import com.evmarket.trade.entity.User;
+import com.evmarket.trade.request.VNPayCallbackRequest;
 import com.evmarket.trade.response.PaymentResponse;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.service.AuthService;
 import com.evmarket.trade.service.PaymentService;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/payments")
 @CrossOrigin(origins = "*")
+@Slf4j
 public class PaymentController {
 
     @Autowired
@@ -24,7 +27,7 @@ public class PaymentController {
     @Autowired
     private AuthService authService;
 
-    // Create payment for listing package
+    // 1. THANH TOÁN GÓI TIN VIP
     @PostMapping("/package")
     public ResponseEntity<BaseResponse<PaymentResponse>> payListingPackage(
             @RequestParam @NotNull Long listingPackageId,
@@ -33,7 +36,16 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.payListingPackage(listingPackageId, user));
     }
 
-    // Create payment for contract (car purchase)
+    // 2. THANH TOÁN MEMBERSHIP
+    @PostMapping("/membership")
+    public ResponseEntity<BaseResponse<PaymentResponse>> payMembership(
+            @RequestParam @NotNull Long servicePackageId,
+            Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(paymentService.payMembership(servicePackageId, user));
+    }
+
+    // 3. THANH TOÁN HỢP ĐỒNG
     @PostMapping("/contract")
     public ResponseEntity<BaseResponse<PaymentResponse>> payContract(
             @RequestParam @NotNull Long contractId,
@@ -42,7 +54,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.payContract(contractId, user));
     }
 
-    // Create payment for contract add-on
+    // 4. THANH TOÁN ADDON
     @PostMapping("/addon")
     public ResponseEntity<BaseResponse<PaymentResponse>> payContractAddOn(
             @RequestParam @NotNull Long contractAddOnId,
@@ -51,24 +63,41 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.payContractAddOn(contractAddOnId, user));
     }
 
-    // Queries
-    @GetMapping("/mine")
-    public ResponseEntity<BaseResponse<List<PaymentResponse>>> myPayments(Authentication authentication) {
+    // CALLBACK TỪ VNPAY
+    @GetMapping("/vnpay/callback")
+    public ResponseEntity<BaseResponse<PaymentResponse>> vnPayCallback(
+            @ModelAttribute VNPayCallbackRequest request) {
+        log.info("Received VNPay callback: vnp_TxnRef={}, vnp_ResponseCode={}",
+                request.getVnp_TxnRef(), request.getVnp_ResponseCode());
+        return ResponseEntity.ok(paymentService.handleVNPayCallback(request));
+    }
+
+    // LỊCH SỬ THANH TOÁN
+    @GetMapping("/history")
+    public ResponseEntity<BaseResponse<List<PaymentResponse>>> getPaymentHistory(
+            Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(paymentService.getMyPayments(user));
     }
 
-    @GetMapping("/contract/{contractId}")
-    public ResponseEntity<BaseResponse<List<PaymentResponse>>> byContract(@PathVariable Long contractId, Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(paymentService.getPaymentsByContract(contractId, user));
+    // LẤY DANH SÁCH GÓI MEMBERSHIP
+    @GetMapping("/membership/packages")
+    public ResponseEntity<BaseResponse<List<com.evmarket.trade.entity.ServicePackage>>> getMembershipPackages() {
+        return ResponseEntity.ok(paymentService.getMembershipPackages());
     }
 
-    @GetMapping("/package/{listingPackageId}")
-    public ResponseEntity<BaseResponse<List<PaymentResponse>>> byPackage(@PathVariable Long listingPackageId, Authentication authentication) {
+    // LẤY DANH SÁCH GÓI TIN VIP
+    @GetMapping("/vip/packages")
+    public ResponseEntity<BaseResponse<List<com.evmarket.trade.entity.ServicePackage>>> getVipPackages() {
+        return ResponseEntity.ok(paymentService.getListingVipPackages());
+    }
+
+    // LẤY CHI TIẾT THANH TOÁN
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<BaseResponse<PaymentResponse>> getPaymentDetail(
+            @PathVariable Long paymentId,
+            Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(paymentService.getPaymentsByListingPackage(listingPackageId, user));
+        return ResponseEntity.ok(paymentService.getPaymentById(paymentId, user));
     }
 }
-
-

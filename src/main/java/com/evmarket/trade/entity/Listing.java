@@ -27,31 +27,30 @@ public class Listing {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "item_type")
+    @Column(name = "item_type", columnDefinition = "nvarchar(50)")
     private String itemType; // vehicle or battery
 
     @Column(name = "item_id")
     private Long itemId; // FK to vehicles/batteries
 
-    @Column(name = "title")
+    @Column(name = "title", columnDefinition = "nvarchar(255)")
     private String title;
 
-    @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "nvarchar(MAX)")
     private String description;
 
     @ElementCollection
     @CollectionTable(name = "listing_images", joinColumns = @JoinColumn(name = "listing_id"))
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "nvarchar(500)")
     private List<String> images; // Changed to List<String> for multiple images
 
-    @Column(name = "location")
+    @Column(name = "location", columnDefinition = "nvarchar(255)")
     private String location;
 
     @Column(name = "price")
     private BigDecimal price;
 
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "nvarchar(50)")
     private String status;
 
     @Column(name = "created_at")
@@ -60,56 +59,57 @@ public class Listing {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    
+    @Column(name = "post_type", columnDefinition = "nvarchar(100)")
+    private String postType; // Package name/tier used for posting
 
     // Vehicle specific fields from Figma form
-    @Column(name = "brand")
+    @Column(name = "brand", columnDefinition = "nvarchar(100)")
     private String brand;
 
-    @Column(name = "model")
+    @Column(name = "model", columnDefinition = "nvarchar(100)")
     private String model;
 
     @Column(name = "year")
     private Integer year;
 
-    @Column(name = "body_type")
+    @Column(name = "body_type", columnDefinition = "nvarchar(50)")
     private String bodyType; // SUV, Sedan, Scooter...
 
-    @Column(name = "color")
+    @Column(name = "color", columnDefinition = "nvarchar(50)")
     private String color; // Red, Blue, White...
 
     @Column(name = "mileage")
     private Integer mileage;
 
-    @Column(name = "inspection")
+    @Column(name = "inspection", columnDefinition = "nvarchar(50)")
     private String inspection; // Yes/No/Until 2025
 
-    @Column(name = "origin")
+    @Column(name = "origin", columnDefinition = "nvarchar(50)")
     private String origin; // Vietnam, China, Japan...
 
     @Column(name = "number_of_seats")
     private Integer numberOfSeats; // 2/4/5
 
-    @Column(name = "license_plate")
+    @Column(name = "license_plate", columnDefinition = "nvarchar(20)")
     private String licensePlate; // 51F-123.45
 
-    @Column(name = "accessories")
+    @Column(name = "accessories", columnDefinition = "nvarchar(500)")
     private String accessories; // Helmet, charger, etc.
 
     @Column(name = "battery_capacity")
     private Double batteryCapacity;
 
-    @Column(name = "condition")
+    @Column(name = "condition", columnDefinition = "nvarchar(50)")
     private String condition;
 
     // Battery specific fields from Figma form
-    @Column(name = "battery_brand")
+    @Column(name = "battery_brand", columnDefinition = "nvarchar(100)")
     private String batteryBrand; // VinFast, CATL, LG...
 
     @Column(name = "voltage")
     private Double voltage; // Voltage (V)
 
-    @Column(name = "capacity")
+    @Column(name = "capacity", columnDefinition = "nvarchar(100)")
     private String capacity; // "32Ah or 2000Wh" - keep as String
 
     @Column(name = "health_percent")
@@ -118,7 +118,7 @@ public class Listing {
     @Column(name = "charge_cycles")
     private Integer chargeCycles; // Charge Cycles
 
-    @Column(name = "type")
+    @Column(name = "type", columnDefinition = "nvarchar(50)")
     private String type; // Battery Type
 
     @Column(name = "manufacture_year")

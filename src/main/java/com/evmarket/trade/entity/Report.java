@@ -21,10 +21,10 @@ public class Report {
     private Listing listing;
 
     @Lob
-    @Column(name = "reason")
+    @Column(name = "reason", columnDefinition = "nvarchar")
     private String reason;
 
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "nvarchar")
     private String status;
 
     @Column(name = "created_at")

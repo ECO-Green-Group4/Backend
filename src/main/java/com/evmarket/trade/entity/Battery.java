@@ -27,13 +27,13 @@ public class Battery {
     private User seller;
 
     // Basic battery fields
-    @Column(name = "brand")
+    @Column(name = "brand", columnDefinition = "nvarchar")
     private String brand; // Battery Brand (VinFast, CATL, LG...)
 
-    @Column(name = "type")
+    @Column(name = "type", columnDefinition = "nvarchar")
     private String type; // Battery Type
 
-    @Column(name = "capacity")
+    @Column(name = "capacity", columnDefinition = "nvarchar")
     private String capacity; // "32Ah or 2000Wh" - keep as String
 
     @Column(name = "health_percent")
@@ -45,7 +45,7 @@ public class Battery {
     @Column(name = "price")
     private BigDecimal price;
 
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "nvarchar")
     private String status;
 
     @Column(name = "created_at")
@@ -61,6 +61,6 @@ public class Battery {
     @Column(name = "charge_cycles")
     private Integer chargeCycles; // Charge Cycles - default 300
 
-    @Column(name = "origin")
+    @Column(name = "origin", columnDefinition = "nvarchar")
     private String origin; // Origin (China, Vietnam, Korea...)
 }

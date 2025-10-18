@@ -116,5 +116,6 @@ public interface AdminService {
     BaseResponse<?> updateServicePackage(Long packageId, UpdateServicePackageRequest request, User admin);
     BaseResponse<?> getAllServicePackages(User admin);
     BaseResponse<?> deleteServicePackage(Long packageId, User admin);
+
 }
 
