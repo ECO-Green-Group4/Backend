@@ -5,6 +5,7 @@ import com.evmarket.trade.exception.AppException;
 import com.evmarket.trade.exception.ErrorHandler;
 import com.evmarket.trade.repository.UserRepository;
 import com.evmarket.trade.response.LoginResponse;
+import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.security.JwtService;
@@ -115,6 +116,24 @@ public class AuthServiceImpl implements AuthService {
         // subject is email now
         return userRepository.findByEmail(subject)
                 .orElseThrow(() -> new AppException(ErrorHandler.USER_NOT_EXISTED));
+    }
+    
+    @Override
+    public UserInfoResponse getUserProfile(Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        return UserInfoResponse.builder()
+                .userId((long) user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
+                .gender(user.getGender())
+                .identityCard(user.getIdentityCard())
+                .address(user.getAddress())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }
 
