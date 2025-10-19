@@ -1,5 +1,7 @@
 package com.evmarket.trade.repository;
 
+
+
 import com.evmarket.trade.entity.Payment;
 import com.evmarket.trade.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,7 +26,13 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findByListingPackageId(Long listingPackageId);
 
+    List<Payment> findByListingPackageIdAndPaymentStatus(Long listingPackageId, String paymentStatus);
+
     List<Payment> findByContractId(Long contractId);
 
+    List<Payment> findByContractIdAndPaymentStatus(Long contractId, String paymentStatus);
+
     List<Payment> findByContractAddOnId(Long contractAddOnId);
+
+    List<Payment> findByContractAddOnIdAndPaymentStatus(Long contractAddOnId, String paymentStatus);
 }

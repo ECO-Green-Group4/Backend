@@ -74,17 +74,55 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("Gói tin đăng không ở trạng thái chờ thanh toán");
             }
 
+            // Kiểm tra xem đã có payment thành công chưa
+            List<Payment> successPayments = paymentRepository.findByListingPackageIdAndPaymentStatus(
+                    listingPackageId, "SUCCESS");
+            if (!successPayments.isEmpty()) {
+                throw new AppException("Gói tin này đã được thanh toán thành công");
+            }
+
             BigDecimal amount = listingPackage.getServicePackage().getListingFee();
 
-            // Tạo payment record
-            Payment payment = createPayment(Payment.PaymentType.PACKAGE, amount, payer);
-            payment.setListingPackageId(listingPackageId);
-            payment = paymentRepository.save(payment);
+            // Kiểm tra xem đã có payment PENDING chưa
+            Payment payment;
+            List<Payment> pendingPayments = paymentRepository.findByListingPackageIdAndPaymentStatus(
+                    listingPackageId, "PENDING");
+            
+            if (!pendingPayments.isEmpty()) {
+                // Dùng lại payment PENDING đã có (thường là payment gần nhất)
+                payment = pendingPayments.get(0);
+                
+                // Kiểm tra xem đã hết hạn chưa
+                if (payment.getExpiryTime() != null && payment.getExpiryTime().isBefore(LocalDateTime.now())) {
+                    // Nếu hết hạn, đánh dấu EXPIRED và tạo payment mới
+                    payment.setPaymentStatus("EXPIRED");
+                    payment.setUpdatedAt(LocalDateTime.now());
+                    paymentRepository.save(payment);
+                    
+                    payment = createPayment(Payment.PaymentType.PACKAGE, amount, payer);
+                    payment.setListingPackageId(listingPackageId);
+                    payment = paymentRepository.save(payment);
+                    
+                    log.info("Payment cũ đã hết hạn, tạo payment mới: paymentId={}", payment.getPaymentId());
+                } else {
+                    // Payment còn hạn, cho phép retry với payment hiện tại
+                    log.info("Dùng lại payment PENDING hiện có: paymentId={}", payment.getPaymentId());
+                }
+            } else {
+                // Chưa có payment PENDING, tạo mới
+                payment = createPayment(Payment.PaymentType.PACKAGE, amount, payer);
+                payment.setListingPackageId(listingPackageId);
+                payment = paymentRepository.save(payment);
+                
+                log.info("Tạo payment mới: paymentId={}", payment.getPaymentId());
+            }
 
             // Gọi MoMo service để tạo thanh toán
+            // Thêm timestamp để đảm bảo orderId unique khi retry
+            String orderId = payment.getPaymentId() + "_" + System.currentTimeMillis();
             Map<String, Object> momoResponse = moMoService.createPayment(
                     amount,
-                    payment.getPaymentId().toString(),
+                    orderId,
                     "EV Trade - Gói tin VIP: " + listingPackage.getServicePackage().getName(),
                     momoReturnUrl
             );
@@ -125,17 +163,50 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("Chỉ người mua được thanh toán hợp đồng");
             }
 
+            // Kiểm tra xem đã có payment thành công chưa
+            List<Payment> successPayments = paymentRepository.findByContractIdAndPaymentStatus(
+                    contractId, "SUCCESS");
+            if (!successPayments.isEmpty()) {
+                throw new AppException("Hợp đồng này đã được thanh toán thành công");
+            }
+
             BigDecimal amount = contract.getOrder().getTotalAmount();
 
-            // Tạo payment record
-            Payment payment = createPayment(Payment.PaymentType.CONTRACT, amount, payer);
-            payment.setContractId(contractId);
-            payment = paymentRepository.save(payment);
+            // Kiểm tra xem đã có payment PENDING chưa
+            Payment payment;
+            List<Payment> pendingPayments = paymentRepository.findByContractIdAndPaymentStatus(
+                    contractId, "PENDING");
+            
+            if (!pendingPayments.isEmpty()) {
+                payment = pendingPayments.get(0);
+                
+                if (payment.getExpiryTime() != null && payment.getExpiryTime().isBefore(LocalDateTime.now())) {
+                    payment.setPaymentStatus("EXPIRED");
+                    payment.setUpdatedAt(LocalDateTime.now());
+                    paymentRepository.save(payment);
+                    
+                    payment = createPayment(Payment.PaymentType.CONTRACT, amount, payer);
+                    payment.setContractId(contractId);
+                    payment = paymentRepository.save(payment);
+                    
+                    log.info("Payment cũ đã hết hạn, tạo payment mới: paymentId={}", payment.getPaymentId());
+                } else {
+                    log.info("Dùng lại payment PENDING hiện có: paymentId={}", payment.getPaymentId());
+                }
+            } else {
+                payment = createPayment(Payment.PaymentType.CONTRACT, amount, payer);
+                payment.setContractId(contractId);
+                payment = paymentRepository.save(payment);
+                
+                log.info("Tạo payment mới: paymentId={}", payment.getPaymentId());
+            }
 
             // Gọi MoMo service để tạo thanh toán
+            // Thêm timestamp để đảm bảo orderId unique khi retry
+            String orderId = payment.getPaymentId() + "_" + System.currentTimeMillis();
             Map<String, Object> momoResponse = moMoService.createPayment(
                     amount,
-                    payment.getPaymentId().toString(),
+                    orderId,
                     "EV Trade - Hợp đồng mua xe #" + contract.getOrder().getOrderId(),
                     momoReturnUrl
             );
@@ -176,17 +247,50 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("Bạn không có quyền thanh toán dịch vụ này");
             }
 
+            // Kiểm tra xem đã có payment thành công chưa
+            List<Payment> successPayments = paymentRepository.findByContractAddOnIdAndPaymentStatus(
+                    contractAddOnId, "SUCCESS");
+            if (!successPayments.isEmpty()) {
+                throw new AppException("Dịch vụ addon này đã được thanh toán thành công");
+            }
+
             BigDecimal amount = contractAddOn.getFee();
 
-            // Tạo payment record
-            Payment payment = createPayment(Payment.PaymentType.ADDON, amount, payer);
-            payment.setContractAddOnId(contractAddOnId);
-            payment = paymentRepository.save(payment);
+            // Kiểm tra xem đã có payment PENDING chưa
+            Payment payment;
+            List<Payment> pendingPayments = paymentRepository.findByContractAddOnIdAndPaymentStatus(
+                    contractAddOnId, "PENDING");
+            
+            if (!pendingPayments.isEmpty()) {
+                payment = pendingPayments.get(0);
+                
+                if (payment.getExpiryTime() != null && payment.getExpiryTime().isBefore(LocalDateTime.now())) {
+                    payment.setPaymentStatus("EXPIRED");
+                    payment.setUpdatedAt(LocalDateTime.now());
+                    paymentRepository.save(payment);
+                    
+                    payment = createPayment(Payment.PaymentType.ADDON, amount, payer);
+                    payment.setContractAddOnId(contractAddOnId);
+                    payment = paymentRepository.save(payment);
+                    
+                    log.info("Payment cũ đã hết hạn, tạo payment mới: paymentId={}", payment.getPaymentId());
+                } else {
+                    log.info("Dùng lại payment PENDING hiện có: paymentId={}", payment.getPaymentId());
+                }
+            } else {
+                payment = createPayment(Payment.PaymentType.ADDON, amount, payer);
+                payment.setContractAddOnId(contractAddOnId);
+                payment = paymentRepository.save(payment);
+                
+                log.info("Tạo payment mới: paymentId={}", payment.getPaymentId());
+            }
 
             // Gọi MoMo service để tạo thanh toán
+            // Thêm timestamp để đảm bảo orderId unique khi retry
+            String orderId = payment.getPaymentId() + "_" + System.currentTimeMillis();
             Map<String, Object> momoResponse = moMoService.createPayment(
                     amount,
-                    payment.getPaymentId().toString(),
+                    orderId,
                     "EV Trade - Dịch vụ: " + contractAddOn.getService().getName(),
                     momoReturnUrl
             );
@@ -255,7 +359,15 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("Chữ ký không hợp lệ");
             }
 
-            Long paymentId = Long.parseLong(request.getOrderId());
+            // Parse paymentId từ orderId (format: "paymentId_timestamp")
+            String orderId = request.getOrderId();
+            Long paymentId;
+            if (orderId.contains("_")) {
+                paymentId = Long.parseLong(orderId.substring(0, orderId.indexOf("_")));
+            } else {
+                paymentId = Long.parseLong(orderId);
+            }
+            
             Payment payment = paymentRepository.findById(paymentId)
                     .orElseThrow(() -> new AppException("Payment không tồn tại"));
 
@@ -436,7 +548,8 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentStatus("PENDING");
         payment.setCurrency("VND");
         payment.setCreatedAt(LocalDateTime.now());
-        payment.setExpiryTime(LocalDateTime.now().plusMinutes(15));
+        payment.setUpdatedAt(LocalDateTime.now());
+        payment.setExpiryTime(LocalDateTime.now().plusMinutes(15)); // Payment hết hạn sau 15 phút
         return payment;
     }
 
