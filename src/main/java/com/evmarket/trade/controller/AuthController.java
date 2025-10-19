@@ -1,6 +1,7 @@
 package com.evmarket.trade.controller;
 
 import com.evmarket.trade.response.LoginResponse;
+import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,6 +49,17 @@ public class AuthController {
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
         System.out.println("Register Request received: " + request);
         return authService.register(request);
+    }
+
+    @Operation(summary = "Get user profile", description = "Get current logged in user's profile information")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class)))
+    })
+    @GetMapping("/me")
+    public ResponseEntity<UserInfoResponse> getUserProfile(Authentication authentication) {
+        return ResponseEntity.ok(authService.getUserProfile(authentication));
     }
 }
 
