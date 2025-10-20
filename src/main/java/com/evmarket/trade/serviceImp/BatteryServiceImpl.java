@@ -25,11 +25,18 @@ public class BatteryServiceImpl implements BatteryService {
     public Battery createBattery(CreateBatteryRequest request, User seller) {
         Battery battery = new Battery();
         battery.setSeller(seller);
-        battery.setType(request.getType());
+        battery.setTitle(request.getTitle());
+        battery.setDescription(request.getDescription());
+        battery.setLocation(request.getLocation());
+        battery.setPrice(request.getPrice());
+        battery.setBrand(request.getBatteryBrand());
+        battery.setVoltage(request.getVoltage());
         battery.setCapacity(request.getCapacity());
         battery.setHealthPercent(request.getHealthPercent());
+        battery.setChargeCycles(request.getChargeCycles());
+        battery.setType(request.getType());
         battery.setManufactureYear(request.getManufactureYear());
-        battery.setPrice(request.getPrice());
+        battery.setOrigin(request.getOrigin());
         battery.setStatus("AVAILABLE");
         battery.setCreatedAt(LocalDateTime.now());
         
@@ -73,11 +80,18 @@ public class BatteryServiceImpl implements BatteryService {
     private BatteryResponse convertToResponse(Battery battery) {
         return new BatteryResponse(
                 battery.getBatteryId(),
-                battery.getType(),
+                battery.getTitle(),
+                battery.getDescription(),
+                battery.getLocation(),
+                battery.getPrice(),
+                battery.getBrand(),
+                battery.getVoltage(),
                 battery.getCapacity(),
                 battery.getHealthPercent(),
+                battery.getChargeCycles(),
+                battery.getType(),
                 battery.getManufactureYear(),
-                battery.getPrice(),
+                battery.getOrigin(),
                 battery.getStatus(),
                 battery.getCreatedAt(),
                 battery.getSeller().getFullName(),

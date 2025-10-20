@@ -5,6 +5,8 @@ import com.evmarket.trade.response.UserInfoResponse;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
+import com.evmarket.trade.request.ForgotPasswordRequest;
+import com.evmarket.trade.request.ResetPasswordRequest;
 import com.evmarket.trade.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,6 +62,28 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> getUserProfile(Authentication authentication) {
         return ResponseEntity.ok(authService.getUserProfile(authentication));
+    }
+
+    @Operation(summary = "Forgot password", description = "Request OTP to reset password. OTP will be sent to the registered email address.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OTP sent successfully (if email exists)"),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class)))
+    })
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return authService.forgotPassword(request);
+    }
+
+    @Operation(summary = "Reset password", description = "Reset password using the OTP received via email")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid OTP or bad request",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class)))
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return authService.resetPassword(request);
     }
 }
 

@@ -26,26 +26,44 @@ public class Battery {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    // Basic battery fields
-    @Column(name = "brand", columnDefinition = "nvarchar")
+    // Fields matching frontend order
+    @Column(name = "title", columnDefinition = "nvarchar(255)")
+    private String title;
+
+    @Column(name = "description", columnDefinition = "nvarchar(max)")
+    private String description;
+
+    @Column(name = "location", columnDefinition = "nvarchar(255)")
+    private String location;
+
+    @Column(name = "price")
+    private BigDecimal price;
+
+    @Column(name = "brand", columnDefinition = "nvarchar(100)")
     private String brand; // Battery Brand (VinFast, CATL, LG...)
 
-    @Column(name = "type", columnDefinition = "nvarchar")
-    private String type; // Battery Type
+    @Column(name = "voltage")
+    private Double voltage; // Voltage (V)
 
-    @Column(name = "capacity", columnDefinition = "nvarchar")
+    @Column(name = "capacity", columnDefinition = "nvarchar(100)")
     private String capacity; // "32Ah or 2000Wh" - keep as String
 
     @Column(name = "health_percent")
     private Integer healthPercent; // SoH (%)
 
+    @Column(name = "charge_cycles")
+    private Integer chargeCycles; // Charge Cycles
+
+    @Column(name = "type", columnDefinition = "nvarchar(100)")
+    private String type; // Battery Type
+
     @Column(name = "manufacture_year")
     private Integer manufactureYear;
 
-    @Column(name = "price")
-    private BigDecimal price;
+    @Column(name = "origin", columnDefinition = "nvarchar(100)")
+    private String origin; // Origin (China, Vietnam, Korea...)
 
-    @Column(name = "status", columnDefinition = "nvarchar")
+    @Column(name = "status", columnDefinition = "nvarchar(50)")
     private String status;
 
     @Column(name = "created_at")
@@ -53,14 +71,4 @@ public class Battery {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // New fields from Figma form
-    @Column(name = "voltage")
-    private Double voltage; // Voltage (V) - default 72
-
-    @Column(name = "charge_cycles")
-    private Integer chargeCycles; // Charge Cycles - default 300
-
-    @Column(name = "origin", columnDefinition = "nvarchar")
-    private String origin; // Origin (China, Vietnam, Korea...)
 }

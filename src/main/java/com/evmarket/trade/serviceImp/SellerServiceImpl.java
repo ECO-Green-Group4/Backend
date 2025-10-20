@@ -63,20 +63,7 @@ public class SellerServiceImpl implements SellerService {
             vehicle.setCreatedAt(LocalDateTime.now());
 
             Vehicle savedVehicle = vehicleRepository.save(vehicle);
-            VehicleResponse response = new VehicleResponse(
-                    savedVehicle.getVehicleId(),
-                    savedVehicle.getBrand(),
-                    savedVehicle.getModel(),
-                    savedVehicle.getYear(),
-                    savedVehicle.getBatteryCapacity(),
-                    savedVehicle.getMileage(),
-                    savedVehicle.getCondition(),
-                    savedVehicle.getPrice(),
-                    savedVehicle.getStatus(),
-                    savedVehicle.getCreatedAt(),
-                    savedVehicle.getSeller().getFullName(),
-                    savedVehicle.getSeller().getPhone()
-            );
+            VehicleResponse response = convertToVehicleResponse(savedVehicle);
             return BaseResponse.success(response, "Vehicle created successfully");
         } catch (Exception e) {
             throw new AppException("Failed to create vehicle: " + e.getMessage());
@@ -102,20 +89,7 @@ public class SellerServiceImpl implements SellerService {
             vehicle.setPrice(request.getPrice());
 
             Vehicle updatedVehicle = vehicleRepository.save(vehicle);
-            VehicleResponse response = new VehicleResponse(
-                    updatedVehicle.getVehicleId(),
-                    updatedVehicle.getBrand(),
-                    updatedVehicle.getModel(),
-                    updatedVehicle.getYear(),
-                    updatedVehicle.getBatteryCapacity(),
-                    updatedVehicle.getMileage(),
-                    updatedVehicle.getCondition(),
-                    updatedVehicle.getPrice(),
-                    updatedVehicle.getStatus(),
-                    updatedVehicle.getCreatedAt(),
-                    updatedVehicle.getSeller().getFullName(),
-                    updatedVehicle.getSeller().getPhone()
-            );
+            VehicleResponse response = convertToVehicleResponse(updatedVehicle);
             return BaseResponse.success(response, "Vehicle updated successfully");
         } catch (Exception e) {
             throw new AppException("Failed to update vehicle: " + e.getMessage());
@@ -144,20 +118,7 @@ public class SellerServiceImpl implements SellerService {
         try {
             List<Vehicle> vehicles = vehicleRepository.findBySeller(seller);
             List<VehicleResponse> responses = vehicles.stream()
-                    .map(v -> new VehicleResponse(
-                            v.getVehicleId(),
-                            v.getBrand(),
-                            v.getModel(),
-                            v.getYear(),
-                            v.getBatteryCapacity(),
-                            v.getMileage(),
-                            v.getCondition(),
-                            v.getPrice(),
-                            v.getStatus(),
-                            v.getCreatedAt(),
-                            v.getSeller().getFullName(),
-                            v.getSeller().getPhone()
-                    ))
+                    .map(this::convertToVehicleResponse)
                     .toList();
             return BaseResponse.success(responses, "Vehicles retrieved successfully");
         } catch (Exception e) {
@@ -175,20 +136,7 @@ public class SellerServiceImpl implements SellerService {
                 throw new AppException("You can only view your own vehicles");
             }
 
-            VehicleResponse response = new VehicleResponse(
-                    vehicle.getVehicleId(),
-                    vehicle.getBrand(),
-                    vehicle.getModel(),
-                    vehicle.getYear(),
-                    vehicle.getBatteryCapacity(),
-                    vehicle.getMileage(),
-                    vehicle.getCondition(),
-                    vehicle.getPrice(),
-                    vehicle.getStatus(),
-                    vehicle.getCreatedAt(),
-                    vehicle.getSeller().getFullName(),
-                    vehicle.getSeller().getPhone()
-            );
+            VehicleResponse response = convertToVehicleResponse(vehicle);
             return BaseResponse.success(response, "Vehicle retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve vehicle: " + e.getMessage());
@@ -210,18 +158,7 @@ public class SellerServiceImpl implements SellerService {
             battery.setCreatedAt(LocalDateTime.now());
 
             Battery savedBattery = batteryRepository.save(battery);
-            BatteryResponse response = new BatteryResponse(
-                    savedBattery.getBatteryId(),
-                    savedBattery.getType(),
-                    savedBattery.getCapacity(),
-                    savedBattery.getHealthPercent(),
-                    savedBattery.getManufactureYear(),
-                    savedBattery.getPrice(),
-                    savedBattery.getStatus(),
-                    savedBattery.getCreatedAt(),
-                    savedBattery.getSeller().getFullName(),
-                    savedBattery.getSeller().getPhone()
-            );
+            BatteryResponse response = convertToBatteryResponse(savedBattery);
             return BaseResponse.success(response, "Battery created successfully");
         } catch (Exception e) {
             throw new AppException("Failed to create battery: " + e.getMessage());
@@ -245,18 +182,7 @@ public class SellerServiceImpl implements SellerService {
             battery.setPrice(request.getPrice());
 
             Battery updatedBattery = batteryRepository.save(battery);
-            BatteryResponse response = new BatteryResponse(
-                    updatedBattery.getBatteryId(),
-                    updatedBattery.getType(),
-                    updatedBattery.getCapacity(),
-                    updatedBattery.getHealthPercent(),
-                    updatedBattery.getManufactureYear(),
-                    updatedBattery.getPrice(),
-                    updatedBattery.getStatus(),
-                    updatedBattery.getCreatedAt(),
-                    updatedBattery.getSeller().getFullName(),
-                    updatedBattery.getSeller().getPhone()
-            );
+            BatteryResponse response = convertToBatteryResponse(updatedBattery);
             return BaseResponse.success(response, "Battery updated successfully");
         } catch (Exception e) {
             throw new AppException("Failed to update battery: " + e.getMessage());
@@ -285,18 +211,7 @@ public class SellerServiceImpl implements SellerService {
         try {
             List<Battery> batteries = batteryRepository.findBySeller(seller);
             List<BatteryResponse> responses = batteries.stream()
-                    .map(b -> new BatteryResponse(
-                            b.getBatteryId(),
-                            b.getType(),
-                            b.getCapacity(),
-                            b.getHealthPercent(),
-                            b.getManufactureYear(),
-                            b.getPrice(),
-                            b.getStatus(),
-                            b.getCreatedAt(),
-                            b.getSeller().getFullName(),
-                            b.getSeller().getPhone()
-                    ))
+                    .map(this::convertToBatteryResponse)
                     .toList();
             return BaseResponse.success(responses, "Batteries retrieved successfully");
         } catch (Exception e) {
@@ -314,18 +229,7 @@ public class SellerServiceImpl implements SellerService {
                 throw new AppException("You can only view your own batteries");
             }
 
-            BatteryResponse response = new BatteryResponse(
-                    battery.getBatteryId(),
-                    battery.getType(),
-                    battery.getCapacity(),
-                    battery.getHealthPercent(),
-                    battery.getManufactureYear(),
-                    battery.getPrice(),
-                    battery.getStatus(),
-                    battery.getCreatedAt(),
-                    battery.getSeller().getFullName(),
-                    battery.getSeller().getPhone()
-            );
+            BatteryResponse response = convertToBatteryResponse(battery);
             return BaseResponse.success(response, "Battery retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve battery: " + e.getMessage());
@@ -630,5 +534,55 @@ public class SellerServiceImpl implements SellerService {
                 .gender(user.getGender())
                 .createdAt(user.getCreatedAt())
                 .build();
+    }
+
+    private VehicleResponse convertToVehicleResponse(Vehicle vehicle) {
+        return new VehicleResponse(
+                vehicle.getVehicleId(),
+                vehicle.getTitle(),
+                vehicle.getDescription(),
+                vehicle.getImages(),
+                vehicle.getLocation(),
+                vehicle.getPrice(),
+                vehicle.getBrand(),
+                vehicle.getModel(),
+                vehicle.getYear(),
+                vehicle.getBodyType(),
+                vehicle.getColor(),
+                vehicle.getMileage(),
+                vehicle.getInspection(),
+                vehicle.getOrigin(),
+                vehicle.getNumberOfSeats(),
+                vehicle.getLicensePlate(),
+                vehicle.getAccessories(),
+                vehicle.getBatteryCapacity(),
+                vehicle.getCondition(),
+                vehicle.getStatus(),
+                vehicle.getCreatedAt(),
+                vehicle.getSeller().getFullName(),
+                vehicle.getSeller().getPhone()
+        );
+    }
+
+    private BatteryResponse convertToBatteryResponse(Battery battery) {
+        return new BatteryResponse(
+                battery.getBatteryId(),
+                battery.getTitle(),
+                battery.getDescription(),
+                battery.getLocation(),
+                battery.getPrice(),
+                battery.getBrand(),
+                battery.getVoltage(),
+                battery.getCapacity(),
+                battery.getHealthPercent(),
+                battery.getChargeCycles(),
+                battery.getType(),
+                battery.getManufactureYear(),
+                battery.getOrigin(),
+                battery.getStatus(),
+                battery.getCreatedAt(),
+                battery.getSeller().getFullName(),
+                battery.getSeller().getPhone()
+        );
     }
 }

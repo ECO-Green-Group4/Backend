@@ -28,7 +28,7 @@ public class Review {
     private Integer rating;
 
     @Lob
-    @Column(name = "comment", columnDefinition = "nvarchar")
+    @Column(name = "comment", columnDefinition = "nvarchar(max)")
     private String comment;
 
     @Column(name = "created_at")

@@ -26,29 +26,62 @@ public class Vehicle {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    // Basic vehicle fields
-    @Column(name = "brand", columnDefinition = "nvarchar")
+    // Fields matching frontend order
+    @Column(name = "title", columnDefinition = "nvarchar(255)")
+    private String title;
+
+    @Column(name = "description", columnDefinition = "nvarchar(max)")
+    private String description;
+
+    @Column(name = "images", columnDefinition = "nvarchar(max)")
+    private String images; // Store as JSON array string or comma-separated URLs
+
+    @Column(name = "location", columnDefinition = "nvarchar(255)")
+    private String location;
+
+    @Column(name = "price")
+    private BigDecimal price;
+
+    @Column(name = "brand", columnDefinition = "nvarchar(100)")
     private String brand;
 
-    @Column(name = "model", columnDefinition = "nvarchar")
+    @Column(name = "model", columnDefinition = "nvarchar(100)")
     private String model;
 
     @Column(name = "year")
     private Integer year;
 
-    @Column(name = "battery_capacity")
-    private Double batteryCapacity;
+    @Column(name = "body_type", columnDefinition = "nvarchar(50)")
+    private String bodyType; // SUV, Sedan, Scooter...
+
+    @Column(name = "color", columnDefinition = "nvarchar(50)")
+    private String color;
 
     @Column(name = "mileage")
     private Integer mileage;
 
-    @Column(name = "condition", columnDefinition = "nvarchar")
+    @Column(name = "inspection", columnDefinition = "nvarchar(255)")
+    private String inspection; // Yes/No/Until 2025
+
+    @Column(name = "origin", columnDefinition = "nvarchar(100)")
+    private String origin; // Vietnam, China, Japan...
+
+    @Column(name = "number_of_seats")
+    private Integer numberOfSeats; // 2/4/5
+
+    @Column(name = "license_plate", columnDefinition = "nvarchar(50)")
+    private String licensePlate; // 51F-123.45
+
+    @Column(name = "accessories", columnDefinition = "nvarchar(max)")
+    private String accessories; // Helmet, charger, etc.
+
+    @Column(name = "battery_capacity")
+    private Double batteryCapacity;
+
+    @Column(name = "condition", columnDefinition = "nvarchar(50)")
     private String condition;
 
-    @Column(name = "price")
-    private BigDecimal price;
-
-    @Column(name = "status", columnDefinition = "nvarchar")
+    @Column(name = "status", columnDefinition = "nvarchar(50)")
     private String status;
 
     @Column(name = "created_at")
@@ -56,26 +89,4 @@ public class Vehicle {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // New fields from Figma form
-    @Column(name = "body_type", columnDefinition = "nvarchar")
-    private String bodyType; // SUV, Sedan, Scooter...
-
-    @Column(name = "color", columnDefinition = "nvarchar")
-    private String color; // Red, Blue, White...
-
-    @Column(name = "inspection", columnDefinition = "nvarchar")
-    private String inspection; // Yes/No/Until 2025
-
-    @Column(name = "origin", columnDefinition = "nvarchar")
-    private String origin; // Vietnam, China, Japan...
-
-    @Column(name = "number_of_seats")
-    private Integer numberOfSeats; // 2/4/5
-
-    @Column(name = "license_plate", columnDefinition = "nvarchar")
-    private String licensePlate; // 51F-123.45
-
-    @Column(name = "accessories", columnDefinition = "nvarchar")
-    private String accessories; // Helmet, charger, etc.
 }

@@ -39,10 +39,21 @@ public class ListingResponse {
     private Double batteryCapacity;
     private Integer mileage;
     private String condition;
+    private String bodyType;
+    private String color;
+    private String inspection;
+    private String origin;
+    private Integer numberOfSeats;
+    private String licensePlate;
+    private String accessories;
     
     // Battery fields
+    private String batteryBrand;
+    private Double voltage;
     private String type;
     private String capacity; // Changed to String
     private Integer healthPercent;
     private Integer manufactureYear;
+    private Integer chargeCycles;
+    // reuse origin above for battery as well
 }

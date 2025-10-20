@@ -16,7 +16,7 @@ public class Contract {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "contract_file", columnDefinition = "nvarchar")
+    @Column(name = "contract_file", columnDefinition = "nvarchar(max)")
     private String contractFile;
 
     @Column(name = "signed_by_seller")
@@ -28,7 +28,7 @@ public class Contract {
     @Column(name = "signed_at")
     private LocalDateTime signedAt;
 
-    @Column(name = "contract_status", columnDefinition = "nvarchar")
+    @Column(name = "contract_status", columnDefinition = "nvarchar(max)")
     private String contractStatus;
 
     public Long getContractId() { return contractId; }

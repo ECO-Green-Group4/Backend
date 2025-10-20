@@ -25,13 +25,24 @@ public class VehicleServiceImpl implements VehicleService {
     public Vehicle createVehicle(CreateVehicleRequest request, User seller) {
         Vehicle vehicle = new Vehicle();
         vehicle.setSeller(seller);
+        vehicle.setTitle(request.getTitle());
+        vehicle.setDescription(request.getDescription());
+        vehicle.setImages(request.getImages());
+        vehicle.setLocation(request.getLocation());
+        vehicle.setPrice(request.getPrice());
         vehicle.setBrand(request.getBrand());
         vehicle.setModel(request.getModel());
         vehicle.setYear(request.getYear());
-        vehicle.setBatteryCapacity(request.getBatteryCapacity());
+        vehicle.setBodyType(request.getBodyType());
+        vehicle.setColor(request.getColor());
         vehicle.setMileage(request.getMileage());
+        vehicle.setInspection(request.getInspection());
+        vehicle.setOrigin(request.getOrigin());
+        vehicle.setNumberOfSeats(request.getNumberOfSeats());
+        vehicle.setLicensePlate(request.getLicensePlate());
+        vehicle.setAccessories(request.getAccessories());
+        vehicle.setBatteryCapacity(request.getBatteryCapacity());
         vehicle.setCondition(request.getCondition());
-        vehicle.setPrice(request.getPrice());
         vehicle.setStatus("AVAILABLE");
         vehicle.setCreatedAt(LocalDateTime.now());
         
@@ -75,13 +86,24 @@ public class VehicleServiceImpl implements VehicleService {
     private VehicleResponse convertToResponse(Vehicle vehicle) {
         return new VehicleResponse(
                 vehicle.getVehicleId(),
+                vehicle.getTitle(),
+                vehicle.getDescription(),
+                vehicle.getImages(),
+                vehicle.getLocation(),
+                vehicle.getPrice(),
                 vehicle.getBrand(),
                 vehicle.getModel(),
                 vehicle.getYear(),
-                vehicle.getBatteryCapacity(),
+                vehicle.getBodyType(),
+                vehicle.getColor(),
                 vehicle.getMileage(),
+                vehicle.getInspection(),
+                vehicle.getOrigin(),
+                vehicle.getNumberOfSeats(),
+                vehicle.getLicensePlate(),
+                vehicle.getAccessories(),
+                vehicle.getBatteryCapacity(),
                 vehicle.getCondition(),
-                vehicle.getPrice(),
                 vehicle.getStatus(),
                 vehicle.getCreatedAt(),
                 vehicle.getSeller().getFullName(),

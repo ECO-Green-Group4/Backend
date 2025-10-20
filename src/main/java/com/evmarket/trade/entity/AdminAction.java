@@ -16,13 +16,13 @@ public class AdminAction {
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
-    @Column(name = "target_type", columnDefinition = "nvarchar")
+    @Column(name = "target_type", columnDefinition = "nvarchar(100)")
     private String targetType;
 
     @Column(name = "target_id")
     private Long targetId;
 
-    @Column(name = "action", columnDefinition = "nvarchar")
+    @Column(name = "action", columnDefinition = "nvarchar(255)")
     private String action;
 
     @Column(name = "created_at")

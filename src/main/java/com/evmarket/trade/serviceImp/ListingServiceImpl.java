@@ -278,14 +278,25 @@ public class ListingServiceImpl implements ListingService {
             response.setBatteryCapacity(listing.getBatteryCapacity());
             response.setMileage(listing.getMileage());
             response.setCondition(listing.getCondition());
+            response.setBodyType(listing.getBodyType());
+            response.setColor(listing.getColor());
+            response.setInspection(listing.getInspection());
+            response.setOrigin(listing.getOrigin());
+            response.setNumberOfSeats(listing.getNumberOfSeats());
+            response.setLicensePlate(listing.getLicensePlate());
+            response.setAccessories(listing.getAccessories());
         }
         
         // Set battery specific fields
         if ("battery".equals(listing.getItemType())) {
+            response.setBatteryBrand(listing.getBatteryBrand());
+            response.setVoltage(listing.getVoltage());
             response.setType(listing.getType());
             response.setCapacity(listing.getCapacity());
             response.setHealthPercent(listing.getHealthPercent());
             response.setManufactureYear(listing.getManufactureYear());
+            response.setChargeCycles(listing.getChargeCycles());
+            response.setOrigin(listing.getOrigin());
         }
         
         return response;

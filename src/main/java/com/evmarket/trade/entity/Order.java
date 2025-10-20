@@ -28,7 +28,7 @@ public class Order {
     @Column(name = "order_date")
     private LocalDateTime orderDate;
 
-    @Column(name = "status", columnDefinition = "nvarchar")
+    @Column(name = "status", columnDefinition = "nvarchar(max)")
     private String status;
 
     @Column(name = "base_price")

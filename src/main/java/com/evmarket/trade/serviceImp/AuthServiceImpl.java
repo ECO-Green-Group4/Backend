@@ -6,10 +6,14 @@ import com.evmarket.trade.exception.ErrorHandler;
 import com.evmarket.trade.repository.UserRepository;
 import com.evmarket.trade.response.LoginResponse;
 import com.evmarket.trade.response.UserInfoResponse;
+import com.evmarket.trade.request.ForgotPasswordRequest;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
+import com.evmarket.trade.request.ResetPasswordRequest;
 import com.evmarket.trade.security.JwtService;
 import com.evmarket.trade.service.AuthService;
+import com.evmarket.trade.service.EmailService;
+import com.evmarket.trade.util.OTPUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,13 +23,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final EmailService emailService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    
+    // Store OTP with email and expiration time (email -> {otp, expirationTime})
+    private final Map<String, OtpData> otpStorage = new ConcurrentHashMap<>();
+    
+    private static class OtpData {
+        String otp;
+        LocalDateTime expirationTime;
+        
+        OtpData(String otp, LocalDateTime expirationTime) {
+            this.otp = otp;
+            this.expirationTime = expirationTime;
+        }
+    }
 
     @Override
     @Transactional
@@ -134,6 +157,82 @@ public class AuthServiceImpl implements AuthService {
                 .address(user.getAddress())
                 .createdAt(user.getCreatedAt())
                 .build();
+    }
+    
+    @Override
+    public ResponseEntity<String> forgotPassword(ForgotPasswordRequest request) {
+        try {
+            String email = request.getEmail().trim().toLowerCase();
+            
+            // Check if user exists - SILENTLY FAIL for security (prevent user enumeration)
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            
+            if (userOpt.isPresent()) {
+                // Only generate and send OTP if user exists
+                String otp = OTPUtil.generateOTP();
+                
+                // Store OTP with 5 minutes expiration
+                LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(5);
+                otpStorage.put(email, new OtpData(otp, expirationTime));
+                
+                // Send OTP via email
+                emailService.sendOtpEmail(email, otp);
+            }
+            
+            // ALWAYS return the same message regardless of whether user exists or not
+            // This prevents attackers from enumerating valid email addresses
+            return ResponseEntity.ok("If your email is registered, an OTP has been sent. The code is valid for 5 minutes.");
+            
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Unable to process request: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public ResponseEntity<String> resetPassword(ResetPasswordRequest request) {
+        try {
+            String email = request.getEmail().trim().toLowerCase();
+            String otp = request.getOtp().trim();
+            String newPassword = request.getNewPassword();
+            
+            // Check if user exists
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new AppException(ErrorHandler.USER_NOT_EXISTED));
+            
+            // Get OTP data from storage
+            OtpData otpData = otpStorage.get(email);
+            
+            // Verify OTP
+            if (otpData == null) {
+                return ResponseEntity.badRequest().body("OTP does not exist or has expired");
+            }
+            
+            // Check if OTP is expired
+            if (LocalDateTime.now().isAfter(otpData.expirationTime)) {
+                otpStorage.remove(email);
+                return ResponseEntity.badRequest().body("OTP has expired");
+            }
+            
+            // Verify OTP match
+            if (!otpData.otp.equals(otp)) {
+                return ResponseEntity.badRequest().body("Invalid OTP");
+            }
+            
+            // Update password
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            
+            // Remove OTP from storage after successful reset
+            otpStorage.remove(email);
+            
+            return ResponseEntity.ok("Password has been reset successfully");
+            
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Unable to reset password: " + e.getMessage());
+        }
     }
 }
 
