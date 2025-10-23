@@ -50,17 +50,6 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
         }
     }
 
-    @Override
-    public BaseResponse<AddOnService> getAddOnServiceById(Long serviceId) {
-        try {
-            AddOnService service = addOnServiceRepository.findById(serviceId)
-                    .orElseThrow(() -> new AppException("Add-on service not found"));
-
-            return BaseResponse.success(service, "Add-on service retrieved successfully");
-        } catch (Exception e) {
-            throw new AppException("Failed to retrieve add-on service: " + e.getMessage());
-        }
-    }
 
     // Contract AddOn management
     @Override
@@ -176,61 +165,7 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
         return r;
     }
 
-    // AddOn payment management
-    @Override
-    public BaseResponse<PaymentResponse> processAddOnPayment(AddOnPaymentRequest request, User user) {
-        try {
-            ContractAddOn contractAddOn = contractAddOnRepository.findById(request.getContractAddOnId())
-                    .orElseThrow(() -> new AppException("Contract add-on not found"));
 
-            // Check if user is either buyer or seller
-            if (contractAddOn.getContract().getOrder().getBuyer().getUserId() != user.getUserId() &&
-                    contractAddOn.getContract().getOrder().getSeller().getUserId() != user.getUserId()) {
-                throw new AppException("You can only pay for your own contract add-ons");
-            }
-
-            // Validate payment amount
-            if (request.getAmount().compareTo(contractAddOn.getFee()) != 0) {
-                throw new AppException("Payment amount does not match add-on fee");
-            }
-
-            // SỬ DỤNG PAYMENT SERVICE MỚI
-            return paymentService.payContractAddOn(request.getContractAddOnId(), user);
-
-        } catch (Exception e) {
-            throw new AppException("Failed to process add-on payment: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public BaseResponse<List<PaymentResponse>> getAddOnPayments(Long contractId, User user) {
-        try {
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new AppException("Contract not found"));
-
-            // Check if user is either buyer or seller
-            if (contract.getOrder().getBuyer().getUserId() != user.getUserId() &&
-                    contract.getOrder().getSeller().getUserId() != user.getUserId()) {
-                throw new AppException("You can only view payments for your own contracts");
-            }
-
-            // SỬA LỖI: Sử dụng phương thức đúng từ PaymentService
-            // Lấy tất cả payments của user và filter theo contract
-            BaseResponse<List<PaymentResponse>> allPaymentsResponse = paymentService.getMyPayments(user);
-
-            if (allPaymentsResponse.isSuccess()) {
-                List<PaymentResponse> contractPayments = allPaymentsResponse.getData().stream()
-                        .filter(payment -> contractId.equals(payment.getContractId()))
-                        .collect(Collectors.toList());
-                return BaseResponse.success(contractPayments, "Add-on payments retrieved successfully");
-            } else {
-                throw new AppException("Failed to retrieve payments: " + allPaymentsResponse.getMessage());
-            }
-
-        } catch (Exception e) {
-            throw new AppException("Failed to retrieve add-on payments: " + e.getMessage());
-        }
-    }
 
     // THÊM PHƯƠNG THỨC MỚI: Get payments by specific contract addon
     public BaseResponse<List<PaymentResponse>> getPaymentsByContractAddOn(Long contractAddOnId, User user) {

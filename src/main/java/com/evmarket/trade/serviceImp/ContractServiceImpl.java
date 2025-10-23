@@ -79,25 +79,6 @@ public class ContractServiceImpl implements ContractService {
         }
     }
 
-    @Override
-    public BaseResponse<ContractResponse> getContractById(Long contractId, User user) {
-        try {
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
-            
-            // Check if user is authorized
-            Order order = contract.getOrder();
-            if (user.getUserId() != order.getBuyer().getUserId() && 
-                user.getUserId() != order.getSeller().getUserId()) {
-                throw new RuntimeException("User is not authorized to view this contract");
-            }
-            
-            return BaseResponse.success(convertToResponse(contract), "Contract retrieved successfully");
-            
-        } catch (Exception e) {
-            return BaseResponse.error("Failed to get contract: " + e.getMessage());
-        }
-    }
 
     @Override
     public BaseResponse<ContractResponse> signContract(ContractSignRequest request, User user) {

@@ -35,11 +35,6 @@ public class BuyerController {
         return ResponseEntity.ok(buyerService.getMyOrders(buyer));
     }
     
-    @GetMapping("/orders/{orderId}")
-    public ResponseEntity<BaseResponse<?>> getOrderById(@PathVariable Long orderId, Authentication authentication) {
-        User buyer = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(buyerService.getOrderById(orderId, buyer));
-    }
     
     @PutMapping("/orders/{orderId}/cancel")
     public ResponseEntity<BaseResponse<?>> cancelOrder(@PathVariable Long orderId, Authentication authentication) {

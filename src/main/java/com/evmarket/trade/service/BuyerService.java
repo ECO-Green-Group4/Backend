@@ -24,7 +24,6 @@ public interface BuyerService {
     // Order management
     BaseResponse<OrderResponse> createOrder(OrderRequest request, User buyer);
     BaseResponse<List<OrderResponse>> getMyOrders(User buyer);
-    BaseResponse<OrderResponse> getOrderById(Long orderId, User buyer);
     BaseResponse<Void> cancelOrder(Long orderId, User buyer);
     
     // Contact information (only for battery purchases)

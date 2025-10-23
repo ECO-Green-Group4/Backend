@@ -28,10 +28,6 @@ public class AddOnController {
         return ResponseEntity.ok(addOnService.getAvailableAddOnServices());
     }
     
-    @GetMapping("/services/{serviceId}")
-    public ResponseEntity<BaseResponse<?>> getAddOnServiceById(@PathVariable Long serviceId) {
-        return ResponseEntity.ok(addOnService.getAddOnServiceById(serviceId));
-    }
     
     // Contract AddOn management endpoints
     @PostMapping("/contract-addon")
@@ -58,17 +54,6 @@ public class AddOnController {
         return ResponseEntity.ok(addOnService.deleteContractAddOn(contractAddOnId, user));
     }
     
-    // AddOn payment management endpoints
-    @PostMapping("/payment")
-    public ResponseEntity<BaseResponse<?>> processAddOnPayment(@Valid @RequestBody AddOnPaymentRequest request, Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(addOnService.processAddOnPayment(request, user));
-    }
     
-    @GetMapping("/contract/{contractId}/payments")
-    public ResponseEntity<BaseResponse<?>> getAddOnPayments(@PathVariable Long contractId, Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(addOnService.getAddOnPayments(contractId, user));
-    }
 }
 

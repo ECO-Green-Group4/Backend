@@ -23,13 +23,4 @@ public class BuyerListingController {
         return ResponseEntity.ok(BaseResponse.success(listingService.getAllAvailableListings(), "Listings retrieved successfully"));
     }
     
-    @GetMapping("/listings/type/{itemType}")
-    public ResponseEntity<BaseResponse<List<ListingResponse>>> getListingsByType(@PathVariable String itemType) {
-        return ResponseEntity.ok(BaseResponse.success(listingService.getListingsByItemType(itemType), "Listings retrieved successfully"));
-    }
-    
-    @GetMapping("/listings/{listingId}")
-    public ResponseEntity<BaseResponse<ListingResponse>> getListingById(@PathVariable Long listingId) {
-        return ResponseEntity.ok(BaseResponse.success(listingService.getListingById(listingId), "Listing retrieved successfully"));
-    }
 }

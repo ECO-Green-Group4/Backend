@@ -34,13 +34,4 @@ public class StaffController {
         return ResponseEntity.ok(staffService.getAssignedOrders(staff));
     }
     
-    /**
-     * Xem chi tiết order được gán
-     */
-    @GetMapping("/orders/{orderId}")
-    @PreAuthorize("hasRole('STAFF')")
-    public ResponseEntity<BaseResponse<OrderResponse>> getAssignedOrderById(@PathVariable Long orderId, Authentication authentication) {
-        User staff = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(staffService.getAssignedOrderById(orderId, staff));
-    }
 }

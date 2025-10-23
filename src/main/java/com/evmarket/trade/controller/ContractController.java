@@ -35,11 +35,6 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getContractsOfMyOrders(user));
     }
     
-    @GetMapping("/{contractId}")
-    public ResponseEntity<BaseResponse<?>> getContractById(@PathVariable Long contractId, Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(contractService.getContractById(contractId, user));
-    }
     
     // Contract signing endpoints
     @PostMapping("/sign")

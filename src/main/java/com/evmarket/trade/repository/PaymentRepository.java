@@ -35,4 +35,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByContractAddOnId(Long contractAddOnId);
 
     List<Payment> findByContractAddOnIdAndPaymentStatus(Long contractAddOnId, String paymentStatus);
+
+    // Find payment by gateway transaction ID (for Stripe sessionId, MoMo orderId, etc.)
+    @Query("SELECT p FROM Payment p WHERE p.gatewayTransactionId = :transactionId")
+    java.util.Optional<Payment> findByGatewayTransactionId(@Param("transactionId") String transactionId);
 }

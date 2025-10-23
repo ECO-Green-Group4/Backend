@@ -35,7 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/buyer/listings/**").permitAll()
-                        .requestMatchers("/api/payments/momo-callback", "/api/payments/vnpay-callback").permitAll()
+                        .requestMatchers("/api/stripe/webhook").permitAll()  // Allow Stripe webhook
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )

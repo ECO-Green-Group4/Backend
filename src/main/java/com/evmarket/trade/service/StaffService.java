@@ -13,8 +13,4 @@ public interface StaffService {
      */
     BaseResponse<List<OrderResponse>> getAssignedOrders(User staff);
     
-    /**
-     * Lấy chi tiết order được gán cho staff
-     */
-    BaseResponse<OrderResponse> getAssignedOrderById(Long orderId, User staff);
 }

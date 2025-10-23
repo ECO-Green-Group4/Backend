@@ -174,21 +174,6 @@ public class BuyerServiceImpl implements BuyerService {
         }
     }
     
-    @Override
-    public BaseResponse<OrderResponse> getOrderById(Long orderId, User buyer) {
-        try {
-            Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException("Order not found"));
-            
-            if (order.getBuyer().getUserId() != buyer.getUserId()) {
-                throw new AppException("You can only view your own orders");
-            }
-            
-            return BaseResponse.success(convertToOrderResponse(order), "Order retrieved successfully");
-        } catch (Exception e) {
-            throw new AppException("Failed to retrieve order: " + e.getMessage());
-        }
-    }
     
     @Override
     public BaseResponse<Void> cancelOrder(Long orderId, User buyer) {

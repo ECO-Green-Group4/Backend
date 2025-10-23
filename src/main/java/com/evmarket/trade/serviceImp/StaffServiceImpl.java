@@ -36,24 +36,6 @@ public class StaffServiceImpl implements StaffService {
         }
     }
     
-    @Override
-    @Transactional(readOnly = true)
-    public BaseResponse<OrderResponse> getAssignedOrderById(Long orderId, User staff) {
-        try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new AppException("Không tìm thấy order với ID: " + orderId));
-            
-            // Kiểm tra order có được gán cho staff này không
-            if (order.getAssignedStaffId() == null || !order.getAssignedStaffId().equals((long) staff.getUserId())) {
-                throw new AppException("Order này không được gán cho bạn");
-            }
-            
-            OrderResponse orderResponse = convertToResponse(order);
-            return BaseResponse.success(orderResponse, "Chi tiết order được gán");
-        } catch (Exception e) {
-            throw new AppException("Lỗi khi lấy chi tiết order: " + e.getMessage());
-        }
-    }
     
     private OrderResponse convertToResponse(Order order) {
         return OrderResponse.builder()
