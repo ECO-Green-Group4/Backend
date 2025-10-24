@@ -2,10 +2,12 @@ package com.evmarket.trade.controller;
 
 
 import com.evmarket.trade.entity.User;
+import com.evmarket.trade.request.VNPayCallbackRequest;
 import com.evmarket.trade.response.PaymentResponse;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.service.AuthService;
 import com.evmarket.trade.service.PaymentService;
+import com.evmarket.trade.service.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,8 @@ public class PaymentController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private VNPayService vnPayService;
 
     @Autowired
     private com.evmarket.trade.serviceImp.StripePaymentServiceImpl stripePaymentService;
@@ -38,6 +42,16 @@ public class PaymentController {
             Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(paymentService.payListingPackage(listingPackageId, user));
+    }
+
+    @PostMapping("/package/vnpay")
+    public ResponseEntity<BaseResponse<PaymentResponse>> payListingPackageWithVNPay(
+            @RequestParam @NotNull Long listingPackageId,
+            HttpServletRequest request,
+            Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        String ipAddress = vnPayService.getIpAddress(request);
+        return ResponseEntity.ok(paymentService.payListingPackageWithVNPay(listingPackageId, user, ipAddress));
     }
 
 
@@ -57,6 +71,16 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.payContract(contractId, user));
     }
 
+    @PostMapping("/contract/vnpay")
+    public ResponseEntity<BaseResponse<PaymentResponse>> payContractWithVNPay(
+            @RequestParam @NotNull Long contractId,
+            HttpServletRequest request,
+            Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        String ipAddress = vnPayService.getIpAddress(request);
+        return ResponseEntity.ok(paymentService.payContractWithVNPay(contractId, user, ipAddress));
+    }
+
 
     @PostMapping("/addon")
     public ResponseEntity<BaseResponse<PaymentResponse>> payContractAddOn(
@@ -66,7 +90,24 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.payContractAddOn(contractAddOnId, user));
     }
 
+    @PostMapping("/addon/vnpay")
+    public ResponseEntity<BaseResponse<PaymentResponse>> payContractAddOnWithVNPay(
+            @RequestParam @NotNull Long contractAddOnId,
+            HttpServletRequest request,
+            Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        String ipAddress = vnPayService.getIpAddress(request);
+        return ResponseEntity.ok(paymentService.payContractAddOnWithVNPay(contractAddOnId, user, ipAddress));
+    }
 
+
+    @GetMapping("/vnpay-callback")
+    public ResponseEntity<BaseResponse<PaymentResponse>> vnPayCallback(
+            @ModelAttribute VNPayCallbackRequest request) {
+        log.info("Received VNPay callback: txnRef={}, responseCode={}",
+                request.getVnp_TxnRef(), request.getVnp_ResponseCode());
+        return ResponseEntity.ok(paymentService.handleVNPayCallback(request));
+    }
 
     @GetMapping("/history")
     public ResponseEntity<BaseResponse<List<PaymentResponse>>> getPaymentHistory(
