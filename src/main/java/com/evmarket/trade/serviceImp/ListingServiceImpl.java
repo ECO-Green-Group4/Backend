@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -91,6 +92,7 @@ public class ListingServiceImpl implements ListingService {
                 .status("DRAFT")
                 .createdAt(LocalDateTime.now())
                 .postType(servicePackage.getName()) // Set post type from package name
+                .packageQuantity(request.getQuantity()) // Set package quantity
                 // Vehicle specific fields trong listing
                 .brand(request.getBrand())
                 .model(request.getModel())
@@ -114,15 +116,18 @@ public class ListingServiceImpl implements ListingService {
         listingPackage.setListing(saved);
         listingPackage.setServicePackage(servicePackage);
         listingPackage.setUser(user);
+        listingPackage.setQuantity(request.getQuantity()); // Set quantity
         listingPackage.setAppliedAt(LocalDateTime.now());
-        listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays()));
+        // Calculate expiration date: duration days * quantity
+        listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays() * request.getQuantity()));
         listingPackage.setStatus("PENDING_PAYMENT");
         ListingPackage savedListingPackage = listingPackageRepository.save(listingPackage);
         
         // Convert to response and include listing package info
         ListingResponse response = convertToResponse(saved);
         response.setListingPackageId(savedListingPackage.getListingPackageId());
-        response.setPackageAmount(savedListingPackage.getServicePackage().getListingFee());
+        // Calculate total amount: listing fee * quantity
+        response.setPackageAmount(savedListingPackage.getServicePackage().getListingFee().multiply(BigDecimal.valueOf(request.getQuantity())));
         response.setPackageStatus(savedListingPackage.getStatus());
         response.setPackageExpiredAt(savedListingPackage.getExpiredAt());
         
@@ -170,6 +175,7 @@ public class ListingServiceImpl implements ListingService {
                 .status("DRAFT")
                 .createdAt(LocalDateTime.now())
                 .postType(servicePackage.getName()) // Set post type from package name
+                .packageQuantity(request.getQuantity()) // Set package quantity
                 // Battery specific fields trong listing
                 .batteryBrand(request.getBrand())
                 .type(request.getType())
@@ -188,15 +194,18 @@ public class ListingServiceImpl implements ListingService {
         listingPackage.setListing(saved);
         listingPackage.setServicePackage(servicePackage);
         listingPackage.setUser(user);
+        listingPackage.setQuantity(request.getQuantity()); // Set quantity
         listingPackage.setAppliedAt(LocalDateTime.now());
-        listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays()));
+        // Calculate expiration date: duration days * quantity
+        listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays() * request.getQuantity()));
         listingPackage.setStatus("PENDING_PAYMENT");
         ListingPackage savedListingPackage = listingPackageRepository.save(listingPackage);
         
         // Convert to response and include listing package info
         ListingResponse response = convertToResponse(saved);
         response.setListingPackageId(savedListingPackage.getListingPackageId());
-        response.setPackageAmount(savedListingPackage.getServicePackage().getListingFee());
+        // Calculate total amount: listing fee * quantity
+        response.setPackageAmount(savedListingPackage.getServicePackage().getListingFee().multiply(BigDecimal.valueOf(request.getQuantity())));
         response.setPackageStatus(savedListingPackage.getStatus());
         response.setPackageExpiredAt(savedListingPackage.getExpiredAt());
         

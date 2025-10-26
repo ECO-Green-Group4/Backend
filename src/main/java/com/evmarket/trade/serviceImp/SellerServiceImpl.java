@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -339,8 +340,11 @@ public class SellerServiceImpl implements SellerService {
             ListingPackage listingPackage = new ListingPackage();
             listingPackage.setListing(listing);
             listingPackage.setServicePackage(servicePackage);
+            listingPackage.setUser(seller);
+            listingPackage.setQuantity(request.getQuantity()); // Set quantity
             listingPackage.setAppliedAt(LocalDateTime.now());
-            listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays()));
+            // Calculate expiration date: duration days * quantity
+            listingPackage.setExpiredAt(LocalDateTime.now().plusDays(servicePackage.getDurationDays() * request.getQuantity()));
             listingPackage.setStatus("PENDING_PAYMENT");
 
             ListingPackage savedListingPackage = listingPackageRepository.save(listingPackage);
@@ -386,8 +390,10 @@ public class SellerServiceImpl implements SellerService {
                 throw new AppException("This listing package is not pending payment");
             }
 
-            // Validate payment amount
-            if (request.getAmount().compareTo(listingPackage.getServicePackage().getListingFee()) != 0) {
+            // Validate payment amount (should be listing fee * quantity)
+            BigDecimal expectedAmount = listingPackage.getServicePackage().getListingFee()
+                    .multiply(BigDecimal.valueOf(listingPackage.getQuantity()));
+            if (request.getAmount().compareTo(expectedAmount) != 0) {
                 throw new AppException("Payment amount does not match package fee");
             }
 

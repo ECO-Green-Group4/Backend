@@ -64,4 +64,8 @@ public class CreateBatteryListingRequest {
     
     @NotNull(message = "Package ID is required")
     private Long packageId;
+    
+    @NotNull(message = "Quantity is required")
+    @Positive(message = "Quantity must be positive")
+    private Integer quantity = 1; // Default to 1 if not specified
 }

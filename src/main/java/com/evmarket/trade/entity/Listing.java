@@ -123,4 +123,7 @@ public class Listing {
 
     @Column(name = "manufacture_year")
     private Integer manufactureYear;
+    
+    @Column(name = "package_quantity")
+    private Integer packageQuantity = 1; // Quantity of packages purchased
 }

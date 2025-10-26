@@ -32,6 +32,9 @@ public class ListingPackage {
 
     @Column(name = "status")
     private String status;
+    
+    @Column(name = "quantity")
+    private Integer quantity = 1; // Quantity of packages purchased
 
     // Constructors
     public ListingPackage() {}
@@ -57,4 +60,7 @@ public class ListingPackage {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 }

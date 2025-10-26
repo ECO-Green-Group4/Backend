@@ -65,7 +65,9 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("Listing package is not in pending payment status");
             }
 
-            BigDecimal amount = listingPackage.getServicePackage().getListingFee();
+            // Calculate amount: listing fee * quantity
+            BigDecimal amount = listingPackage.getServicePackage().getListingFee()
+                    .multiply(BigDecimal.valueOf(listingPackage.getQuantity()));
 
             // Create payment record
             Payment payment = createPayment(Payment.PaymentType.PACKAGE, amount, payer);
@@ -297,7 +299,9 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("This package has already been paid successfully");
             }
 
-            BigDecimal amount = listingPackage.getServicePackage().getListingFee();
+            // Calculate amount: listing fee * quantity
+            BigDecimal amount = listingPackage.getServicePackage().getListingFee()
+                    .multiply(BigDecimal.valueOf(listingPackage.getQuantity()));
 
             // Check if there is a pending payment
             Payment payment;
