@@ -7,6 +7,7 @@ import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.request.ForgotPasswordRequest;
 import com.evmarket.trade.request.ResetPasswordRequest;
+import com.evmarket.trade.request.ChangePasswordRequest;
 import com.evmarket.trade.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -84,6 +85,19 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         return authService.resetPassword(request);
+    }
+
+    @Operation(summary = "Change password", description = "Change password for authenticated user using current password")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password changed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid current password or bad request",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class)))
+    })
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
+        return authService.changePassword(request, authentication);
     }
 }
 

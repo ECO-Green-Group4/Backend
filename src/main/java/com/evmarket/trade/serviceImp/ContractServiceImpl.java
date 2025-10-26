@@ -38,10 +38,9 @@ public class ContractServiceImpl implements ContractService {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
             
-            // Check if user is authorized (either buyer or seller)
-            if (user.getUserId() != order.getBuyer().getUserId() && 
-                user.getUserId() != order.getSeller().getUserId()) {
-                throw new RuntimeException("User is not authorized to generate contract for this order");
+            // Check if user is authorized (only staff can generate contracts)
+            if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
+                throw new RuntimeException("Only staff can generate contracts");
             }
             
             // Check if contract already exists
@@ -100,11 +99,27 @@ public class ContractServiceImpl implements ContractService {
                 throw new RuntimeException("User is not authorized to sign this contract");
             }
             
-            // Update contract status
+            // Update contract status and signature flags
             if ("DRAFT".equals(contract.getContractStatus())) {
                 contract.setContractStatus("PENDING_SIGNATURE");
+                // First signature - set the appropriate flag
+                if (isBuyer) {
+                    contract.setSignedByBuyer(true);
+                } else if (isSeller) {
+                    contract.setSignedBySeller(true);
+                }
             } else if ("PENDING_SIGNATURE".equals(contract.getContractStatus())) {
-                contract.setContractStatus("SIGNED");
+                // Second signature - set the remaining flag and mark as fully signed
+                if (isBuyer && (contract.getSignedByBuyer() == null || !contract.getSignedByBuyer())) {
+                    contract.setSignedByBuyer(true);
+                } else if (isSeller && (contract.getSignedBySeller() == null || !contract.getSignedBySeller())) {
+                    contract.setSignedBySeller(true);
+                }
+                
+                // Check if both parties have signed
+                if (Boolean.TRUE.equals(contract.getSignedByBuyer()) && Boolean.TRUE.equals(contract.getSignedBySeller())) {
+                    contract.setContractStatus("SIGNED");
+                }
             }
             
             contract.setSignedAt(LocalDateTime.now());
@@ -201,14 +216,12 @@ public class ContractServiceImpl implements ContractService {
     private ContractResponse convertToResponse(Contract contract) {
         if (contract == null) return null;
         Order order = contract.getOrder();
-        boolean sellerSigned = "SELLER_SIGNED".equals(contract.getContractStatus()) || "SIGNED".equals(contract.getContractStatus());
-        boolean buyerSigned = "BUYER_SIGNED".equals(contract.getContractStatus()) || "SIGNED".equals(contract.getContractStatus());
         return ContractResponse.builder()
                 .contractId(contract.getContractId())
                 .orderId(order != null ? order.getOrderId() : null)
                 .status(contract.getContractStatus())
-                .sellerSigned(sellerSigned)
-                .buyerSigned(buyerSigned)
+                .sellerSigned(contract.getSignedBySeller() != null ? contract.getSignedBySeller() : false)
+                .buyerSigned(contract.getSignedByBuyer() != null ? contract.getSignedByBuyer() : false)
                 .signedAt(contract.getSignedAt())
                 .createdAt(contract.getSignedAt())
                 .build();

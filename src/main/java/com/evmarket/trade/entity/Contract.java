@@ -2,6 +2,7 @@ package com.evmarket.trade.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "contracts")
@@ -31,6 +32,12 @@ public class Contract {
     @Column(name = "contract_status", columnDefinition = "nvarchar(max)")
     private String contractStatus;
 
+    // Danh sách các addon IDs được gán cho contract này
+    @ElementCollection
+    @CollectionTable(name = "contract_addon_ids", joinColumns = @JoinColumn(name = "contract_id"))
+    @Column(name = "addon_id")
+    private List<Long> addonIds;
+
     public Long getContractId() { return contractId; }
     public void setContractId(Long contractId) { this.contractId = contractId; }
     public Order getOrder() { return order; }
@@ -45,4 +52,6 @@ public class Contract {
     public void setSignedAt(LocalDateTime signedAt) { this.signedAt = signedAt; }
     public String getContractStatus() { return contractStatus; }
     public void setContractStatus(String contractStatus) { this.contractStatus = contractStatus; }
+    public List<Long> getAddonIds() { return addonIds; }
+    public void setAddonIds(List<Long> addonIds) { this.addonIds = addonIds; }
 }

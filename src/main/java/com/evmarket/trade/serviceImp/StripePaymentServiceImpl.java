@@ -171,65 +171,6 @@ public class StripePaymentServiceImpl {
     }
 
     /**
-     * Thanh toán Contract bằng Stripe
-     */
-    @Transactional
-    public BaseResponse<StripeCheckoutResponse> payContractWithStripe(Long contractId, User payer) {
-        try {
-            log.info("Starting Stripe payment for contract: {}, user: {}", contractId, payer.getUserId());
-
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new AppException("Contract not found"));
-
-            // Validate contract - buyer is from order
-            if (contract.getOrder().getBuyer().getUserId() != payer.getUserId()) {
-                throw new AppException("You are not authorized to pay for this contract");
-            }
-
-            if (!"PENDING_PAYMENT".equals(contract.getContractStatus())) {
-                throw new AppException("Contract is not in pending payment status");
-            }
-
-            BigDecimal amount = contract.getOrder().getTotalAmount();
-            Long amountInVND = amount.multiply(BigDecimal.valueOf(1)).longValue();
-
-            // Tạo Payment record
-            Payment payment = new Payment();
-            payment.setPaymentType(Payment.PaymentType.CONTRACT);
-            payment.setContractId(contractId);
-            payment.setPayer(payer);
-            payment.setPaymentGateway("STRIPE");
-            payment.setAmount(amount);
-            payment.setCurrency("VND");
-            payment.setPaymentStatus("PENDING");
-            payment.setCreatedAt(LocalDateTime.now());
-            payment.setExpiryTime(LocalDateTime.now().plusMinutes(30));
-
-            Payment savedPayment = paymentRepository.save(payment);
-
-            // Tạo Stripe Checkout Session
-            StripeCheckoutRequest stripeRequest = new StripeCheckoutRequest();
-            stripeRequest.setOrderId(savedPayment.getPaymentId());
-            stripeRequest.setAmount(amountInVND);
-            stripeRequest.setProductName("Contract #" + contractId);
-            stripeRequest.setDescription("Contract for order #" + contract.getOrder().getOrderId());
-            stripeRequest.setCustomerEmail(payer.getEmail());
-            stripeRequest.setQuantity(1);
-
-            StripeCheckoutResponse stripeResponse = stripeService.createCheckoutSession(stripeRequest);
-
-            payment.setGatewayTransactionId(stripeResponse.getSessionId());
-            paymentRepository.save(payment);
-
-            return BaseResponse.success(stripeResponse, "Contract payment session created");
-
-        } catch (StripeException e) {
-            log.error("Stripe API error: ", e);
-            throw new AppException("Failed to create Stripe payment: " + e.getMessage());
-        }
-    }
-
-    /**
      * Thanh toán Contract Add-On bằng Stripe
      */
     @Transactional
@@ -240,15 +181,12 @@ public class StripePaymentServiceImpl {
             ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
                     .orElseThrow(() -> new AppException("Contract add-on not found"));
 
-            // Validate - buyer is from contract's order
-            if (contractAddOn.getContract().getOrder().getBuyer().getUserId() != payer.getUserId()) {
-                throw new AppException("You are not authorized to pay for this add-on");
-            }
+            Contract contract = contractAddOn.getContract();
+            boolean isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId()
+                    || contract.getOrder().getSeller().getUserId() == payer.getUserId();
 
-            // Note: ContractAddOn doesn't have status field
-            // Validation is based on contract status
-            if (!"PAID".equals(contractAddOn.getContract().getContractStatus())) {
-                throw new AppException("Contract must be paid before adding services");
+            if (!isAuthorized) {
+                throw new AppException("You are not authorized to pay for this service");
             }
 
             BigDecimal amount = contractAddOn.getFee();
@@ -290,6 +228,7 @@ public class StripePaymentServiceImpl {
         }
     }
 
+
     /**
      * Xử lý callback từ Stripe webhook khi thanh toán thành công
      * Method này được gọi từ StripeController webhook handler
@@ -324,9 +263,6 @@ public class StripePaymentServiceImpl {
                 case MEMBERSHIP:
                     handleMembershipPaymentSuccess(payment);
                     break;
-                case CONTRACT:
-                    handleContractPaymentSuccess(payment);
-                    break;
                 case ADDON:
                     handleAddOnPaymentSuccess(payment);
                     break;
@@ -352,16 +288,6 @@ public class StripePaymentServiceImpl {
         // TODO: Implement membership activation logic
         log.info("Membership payment successful for user: {}", payment.getPayer().getUserId());
         // Có thể update user membership status, expiry date, etc.
-    }
-
-    private void handleContractPaymentSuccess(Payment payment) {
-        Contract contract = contractRepository.findById(payment.getContractId())
-                .orElseThrow(() -> new AppException("Contract not found"));
-
-        contract.setContractStatus("PAID");
-        contractRepository.save(contract);
-
-        log.info("Updated contract status to PAID: {}", contract.getContractId());
     }
 
     private void handleAddOnPaymentSuccess(Payment payment) {

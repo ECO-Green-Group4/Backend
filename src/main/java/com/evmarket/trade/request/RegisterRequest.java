@@ -22,6 +22,10 @@ public class RegisterRequest {
 
     @NotBlank(message = "password is required")
     @Size(min = 8, message = "password must be at least 8 characters")
+    @Pattern(
+        regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+        message = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+    )
     @Schema(description = "Password", example = "")
     private String password;
 

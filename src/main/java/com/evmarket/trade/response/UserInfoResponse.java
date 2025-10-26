@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class UserInfoResponse {
     private Long userId;
     private String fullName;
@@ -25,4 +25,7 @@ public class UserInfoResponse {
     private String identityCard;
     private String address;
     private LocalDateTime createdAt;
+    private Long currentMembershipId;
+    private LocalDateTime membershipExpiry;
+    private Integer availableCoupons;
 }

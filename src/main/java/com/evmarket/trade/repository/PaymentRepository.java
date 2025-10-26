@@ -36,6 +36,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findByContractAddOnIdAndPaymentStatus(Long contractAddOnId, String paymentStatus);
 
+    @Query("SELECT p FROM Payment p WHERE p.payer = :payer AND p.paymentType = :paymentType AND p.paymentStatus = :paymentStatus ORDER BY p.createdAt DESC")
+    List<Payment> findByPayerAndPaymentTypeAndPaymentStatus(@Param("payer") User payer, @Param("paymentType") Payment.PaymentType paymentType, @Param("paymentStatus") String paymentStatus);
+
     // Find payment by gateway transaction ID (for Stripe sessionId, MoMo orderId, etc.)
     @Query("SELECT p FROM Payment p WHERE p.gatewayTransactionId = :transactionId")
     java.util.Optional<Payment> findByGatewayTransactionId(@Param("transactionId") String transactionId);

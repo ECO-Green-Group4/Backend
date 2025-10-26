@@ -63,24 +63,15 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.payMembership(servicePackageId, user));
     }
 
-    @PostMapping("/contract")
-    public ResponseEntity<BaseResponse<PaymentResponse>> payContract(
-            @RequestParam @NotNull Long contractId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(paymentService.payContract(contractId, user));
-    }
-
-    @PostMapping("/contract/vnpay")
-    public ResponseEntity<BaseResponse<PaymentResponse>> payContractWithVNPay(
-            @RequestParam @NotNull Long contractId,
+    @PostMapping("/membership/vnpay")
+    public ResponseEntity<BaseResponse<PaymentResponse>> payMembershipWithVNPay(
+            @RequestParam @NotNull Long servicePackageId,
             HttpServletRequest request,
             Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         String ipAddress = vnPayService.getIpAddress(request);
-        return ResponseEntity.ok(paymentService.payContractWithVNPay(contractId, user, ipAddress));
+        return ResponseEntity.ok(paymentService.payMembershipWithVNPay(servicePackageId, user, ipAddress));
     }
-
 
     @PostMapping("/addon")
     public ResponseEntity<BaseResponse<PaymentResponse>> payContractAddOn(
@@ -98,6 +89,16 @@ public class PaymentController {
         User user = authService.getCurrentUser(authentication);
         String ipAddress = vnPayService.getIpAddress(request);
         return ResponseEntity.ok(paymentService.payContractAddOnWithVNPay(contractAddOnId, user, ipAddress));
+    }
+
+    @PostMapping("/contract/{contractId}/addons/vnpay")
+    public ResponseEntity<BaseResponse<PaymentResponse>> payContractAddonsWithVNPay(
+            @PathVariable @NotNull Long contractId,
+            HttpServletRequest request,
+            Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        String ipAddress = vnPayService.getIpAddress(request);
+        return ResponseEntity.ok(paymentService.payContractAddonsWithVNPay(contractId, user, ipAddress));
     }
 
 
@@ -151,14 +152,6 @@ public class PaymentController {
             Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(stripePaymentService.payMembershipWithStripe(servicePackageId, user));
-    }
-
-    @PostMapping("/contract/stripe")
-    public ResponseEntity<BaseResponse<com.evmarket.trade.response.StripeCheckoutResponse>> payContractWithStripe(
-            @RequestParam @NotNull Long contractId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(stripePaymentService.payContractWithStripe(contractId, user));
     }
 
     @PostMapping("/addon/stripe")

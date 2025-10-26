@@ -22,10 +22,16 @@ public class ContractController {
     @Autowired
     private AuthService authService;
     
-    // Contract generation endpoints
+    // Contract generation endpoints (Staff only)
     @PostMapping("/generate/{orderId}")
     public ResponseEntity<BaseResponse<?>> generateContract(@PathVariable Long orderId, Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
+        
+        // Additional check to ensure only staff can access this endpoint
+        if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
+            return ResponseEntity.status(403).body(BaseResponse.error("Access denied. Only staff can generate contracts."));
+        }
+        
         return ResponseEntity.ok(contractService.generateContract(orderId, user));
     }
     

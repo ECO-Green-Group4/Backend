@@ -64,7 +64,6 @@ public class Payment {
     public enum PaymentType {
         PACKAGE,      // Thanh toán gói tin VIP
         MEMBERSHIP,   // Thanh toán membership
-        CONTRACT,     // Thanh toán hợp đồng
         ADDON         // Thanh toán addon
     }
 

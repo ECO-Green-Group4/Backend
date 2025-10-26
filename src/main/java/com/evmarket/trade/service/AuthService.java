@@ -7,6 +7,7 @@ import com.evmarket.trade.request.ForgotPasswordRequest;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.request.ResetPasswordRequest;
+import com.evmarket.trade.request.ChangePasswordRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
@@ -19,6 +20,9 @@ public interface AuthService {
     // Forgot password methods
     ResponseEntity<String> forgotPassword(ForgotPasswordRequest request);
     ResponseEntity<String> resetPassword(ResetPasswordRequest request);
+    
+    // Change password method
+    ResponseEntity<String> changePassword(ChangePasswordRequest request, Authentication authentication);
 }
 
 

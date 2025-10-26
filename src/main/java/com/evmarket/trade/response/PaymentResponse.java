@@ -14,15 +14,20 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 public class PaymentResponse {
+    private Long id;
     private Long paymentId;
     private String paymentType;
+    private String paymentMethod;
     private BigDecimal amount;
     private String currency;
+    private String paymentStatus;
     private String status;
     private String paymentUrl; // URL để redirect đến VNPay
     private LocalDateTime paymentDate;
+    private LocalDateTime createdAt;
     private LocalDateTime expiryTime;
     private String gatewayTransactionId;
+    private String transactionId;
 
     // Additional info
     private Long contractId;

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,15 +59,19 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             Contract contract = contractRepository.findById(request.getContractId())
                     .orElseThrow(() -> new AppException("Contract not found"));
 
-            // Check if user is either buyer or seller
-            if (contract.getOrder().getBuyer().getUserId() != user.getUserId() &&
-                    contract.getOrder().getSeller().getUserId() != user.getUserId()) {
-                throw new AppException("You can only add services to your own contracts");
+            // Check if user is staff or admin
+            if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
+                throw new AppException("Only staff can add services to contracts");
             }
 
-            // Check if contract is signed
-            if (!"SIGNED".equals(contract.getContractStatus())) {
-                throw new AppException("Add-on services can only be added to signed contracts");
+            // Check if contract is in a valid state for adding add-ons
+            // Allow adding add-ons to contracts that are DRAFT, PENDING_SIGNATURE, or SIGNED
+            String contractStatus = contract.getContractStatus();
+            if (contractStatus == null || 
+                (!"DRAFT".equals(contractStatus) && 
+                 !"PENDING_SIGNATURE".equals(contractStatus) && 
+                 !"SIGNED".equals(contractStatus))) {
+                throw new AppException("Add-on services can only be added to contracts in DRAFT, PENDING_SIGNATURE, or SIGNED status");
             }
 
             AddOnService service = addOnServiceRepository.findById(request.getServiceId())
@@ -87,9 +92,13 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             contractAddOn.setService(service);
             contractAddOn.setFee(service.getDefaultFee());
             contractAddOn.setCreatedAt(LocalDateTime.now());
-            // KHÔNG SET STATUS VÌ ContractAddOn CHƯA CÓ FIELD STATUS
+            contractAddOn.setPaymentStatus("PENDING"); // Trạng thái thanh toán mặc định
 
             ContractAddOn saved = contractAddOnRepository.save(contractAddOn);
+            
+            // Cập nhật danh sách addonIds trong contract
+            updateContractAddonIds(contract, saved.getId());
+            
             return BaseResponse.success(toResponse(saved), "Contract add-on created successfully");
         } catch (Exception e) {
             throw new AppException("Failed to create contract add-on: " + e.getMessage());
@@ -102,9 +111,12 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             Contract contract = contractRepository.findById(contractId)
                     .orElseThrow(() -> new AppException("Contract not found"));
 
-            // Check if user is either buyer or seller
-            if (contract.getOrder().getBuyer().getUserId() != user.getUserId() &&
-                    contract.getOrder().getSeller().getUserId() != user.getUserId()) {
+            // Check if user is authorized to view this contract's add-ons
+            boolean isAuthorized = "STAFF".equals(user.getRole()) || "ADMIN".equals(user.getRole()) ||
+                    contract.getOrder().getBuyer().getUserId() == user.getUserId() ||
+                    contract.getOrder().getSeller().getUserId() == user.getUserId();
+            
+            if (!isAuthorized) {
                 throw new AppException("You can only view add-ons for your own contracts");
             }
 
@@ -122,9 +134,13 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
                     .orElseThrow(() -> new AppException("Contract add-on not found"));
 
-            // Check if user is either buyer or seller
-            if (contractAddOn.getContract().getOrder().getBuyer().getUserId() != user.getUserId() &&
-                    contractAddOn.getContract().getOrder().getSeller().getUserId() != user.getUserId()) {
+            // Check if user is authorized to view this add-on
+            Contract contract = contractAddOn.getContract();
+            boolean isAuthorized = "STAFF".equals(user.getRole()) || "ADMIN".equals(user.getRole()) ||
+                    contract.getOrder().getBuyer().getUserId() == user.getUserId() ||
+                    contract.getOrder().getSeller().getUserId() == user.getUserId();
+            
+            if (!isAuthorized) {
                 throw new AppException("You can only view your own contract add-ons");
             }
 
@@ -140,13 +156,20 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
                     .orElseThrow(() -> new AppException("Contract add-on not found"));
 
-            // Check if user is either buyer or seller
-            if (contractAddOn.getContract().getOrder().getBuyer().getUserId() != user.getUserId() &&
-                    contractAddOn.getContract().getOrder().getSeller().getUserId() != user.getUserId()) {
-                throw new AppException("You can only delete your own contract add-ons");
+            // Check if user is staff or admin
+            if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
+                throw new AppException("Only staff can delete contract add-ons");
             }
 
+            // Lưu contract và addonId trước khi xóa
+            Contract contract = contractAddOn.getContract();
+            Long addonId = contractAddOn.getId();
+            
             contractAddOnRepository.delete(contractAddOn);
+            
+            // Xóa addonId khỏi danh sách trong contract
+            removeContractAddonId(contract, addonId);
+            
             return BaseResponse.success(null, "Contract add-on deleted successfully");
         } catch (Exception e) {
             throw new AppException("Failed to delete contract add-on: " + e.getMessage());
@@ -161,7 +184,7 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
         r.setServiceName(entity.getService() != null ? entity.getService().getName() : null);
         r.setFee(entity.getFee());
         r.setCreatedAt(entity.getCreatedAt());
-        // KHÔNG SET STATUS VÌ ContractAddOn CHƯA CÓ FIELD STATUS
+        r.setPaymentStatus(entity.getPaymentStatus());
         return r;
     }
 
@@ -208,4 +231,28 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
                 .contractAddOnId(payment.getContractAddOnId()) // Thêm contractAddOnId
                 .build();
     }
+
+    // Helper method để cập nhật danh sách addonIds trong contract
+    private void updateContractAddonIds(Contract contract, Long addonId) {
+        List<Long> addonIds = contract.getAddonIds();
+        if (addonIds == null) {
+            addonIds = new ArrayList<>();
+        }
+        if (!addonIds.contains(addonId)) {
+            addonIds.add(addonId);
+            contract.setAddonIds(addonIds);
+            contractRepository.save(contract);
+        }
+    }
+
+    // Helper method để xóa addonId khỏi danh sách trong contract
+    private void removeContractAddonId(Contract contract, Long addonId) {
+        List<Long> addonIds = contract.getAddonIds();
+        if (addonIds != null && addonIds.contains(addonId)) {
+            addonIds.remove(addonId);
+            contract.setAddonIds(addonIds);
+            contractRepository.save(contract);
+        }
+    }
+
 }

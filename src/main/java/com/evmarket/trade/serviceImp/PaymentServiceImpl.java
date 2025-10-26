@@ -111,35 +111,72 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public BaseResponse<PaymentResponse> payContract(Long contractId, User payer) {
+    public BaseResponse<PaymentResponse> payMembershipWithVNPay(Long servicePackageId, User payer, String ipAddress) {
         try {
-            log.info("Starting contract payment: contractId={}, user={}", contractId, payer.getUserId());
+            log.info("Starting membership payment with VNPay: servicePackageId={}, user={}", servicePackageId, payer.getUserId());
 
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new AppException("Contract not found"));
+            ServicePackage servicePackage = servicePackageRepository.findById(servicePackageId)
+                    .orElseThrow(() -> new AppException("Service package not found"));
 
-            if (contract.getOrder().getBuyer().getUserId() != payer.getUserId()) {
-                throw new AppException("You are not authorized to pay for this contract");
+            if (servicePackage.getPackageType() != ServicePackage.PackageType.MEMBERSHIP) {
+                throw new AppException("This is not a membership package");
             }
 
-            if (!"PENDING_PAYMENT".equals(contract.getContractStatus())) {
-                throw new AppException("Contract is not in pending payment status");
+            BigDecimal amount = servicePackage.getListingFee();
+
+            // Check if there is a pending payment for this user and service package
+            Payment payment;
+            List<Payment> pendingPayments = paymentRepository.findByPayerAndPaymentTypeAndPaymentStatus(
+                    payer, Payment.PaymentType.MEMBERSHIP, "PENDING");
+            
+            if (!pendingPayments.isEmpty()) {
+                payment = pendingPayments.get(0);
+                
+                if (payment.getExpiryTime() != null && payment.getExpiryTime().isBefore(LocalDateTime.now())) {
+                    payment.setPaymentStatus("EXPIRED");
+                    payment.setUpdatedAt(LocalDateTime.now());
+                    paymentRepository.save(payment);
+                    
+                    payment = createVNPayPayment(Payment.PaymentType.MEMBERSHIP, amount, payer);
+                    payment = paymentRepository.save(payment);
+                    
+                    log.info("Old payment expired, created new payment: paymentId={}", payment.getPaymentId());
+                } else {
+                    log.info("Reusing existing pending payment: paymentId={}", payment.getPaymentId());
+                }
+            } else {
+                payment = createVNPayPayment(Payment.PaymentType.MEMBERSHIP, amount, payer);
+                payment = paymentRepository.save(payment);
+                
+                log.info("Created new payment: paymentId={}", payment.getPaymentId());
             }
 
-            BigDecimal amount = contract.getOrder().getTotalAmount();
+            // Call VNPay service to create payment
+            String txnRef = payment.getPaymentId() + "_" + System.currentTimeMillis();
+            String paymentUrl = vnPayService.createPaymentUrl(
+                    amount,
+                    "EV Trade - Membership: " + servicePackage.getName(),
+                    txnRef,
+                    ipAddress,
+                    null
+            );
 
-            // Create payment record
-            Payment payment = createPayment(Payment.PaymentType.CONTRACT, amount, payer);
-            payment.setContractId(contractId);
-            payment = paymentRepository.save(payment);
-
+            // Create response
             PaymentResponse response = toPaymentResponse(payment);
+            response.setPaymentUrl(paymentUrl);
+            
+            Map<String, Object> vnpayData = new HashMap<>();
+            vnpayData.put("paymentUrl", paymentUrl);
+            vnpayData.put("txnRef", txnRef);
+            response.setGatewayResponse(vnpayData);
 
-            return BaseResponse.success(response, "Payment created. Use Stripe endpoints for payment processing.");
+            log.info("VNPay membership payment created successfully. Payment URL: {}", paymentUrl);
+
+            return BaseResponse.success(response, "VNPay membership payment created successfully");
 
         } catch (Exception e) {
-            log.error("Error processing contract payment: ", e);
-            throw new AppException("Error processing payment: " + e.getMessage());
+            log.error("Error creating membership payment with VNPay: ", e);
+            throw new AppException("Error creating membership payment: " + e.getMessage());
         }
     }
 
@@ -151,8 +188,12 @@ public class PaymentServiceImpl implements PaymentService {
             ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
                     .orElseThrow(() -> new AppException("Contract add-on not found"));
 
-            if (contractAddOn.getContract().getOrder().getBuyer().getUserId() != payer.getUserId()) {
-                throw new AppException("You are not authorized to pay for this add-on");
+            Contract contract = contractAddOn.getContract();
+            boolean isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId()
+                    || contract.getOrder().getSeller().getUserId() == payer.getUserId();
+
+            if (!isAuthorized) {
+                throw new AppException("You are not authorized to pay for this service");
             }
 
             BigDecimal amount = contractAddOn.getFee();
@@ -164,13 +205,14 @@ public class PaymentServiceImpl implements PaymentService {
 
             PaymentResponse response = toPaymentResponse(payment);
 
-            return BaseResponse.success(response, "Payment created. Use Stripe endpoints for payment processing.");
+            return BaseResponse.success(response, "Contract add-on payment created. Use Stripe endpoints for payment processing.");
 
         } catch (Exception e) {
             log.error("Error processing contract add-on payment: ", e);
             throw new AppException("Error processing payment: " + e.getMessage());
         }
     }
+
 
     @Override
     public BaseResponse<List<ServicePackage>> getMembershipPackages() {
@@ -316,95 +358,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public BaseResponse<PaymentResponse> payContractWithVNPay(Long contractId, User payer, String ipAddress) {
-        try {
-            log.info("Starting contract payment with VNPay: contractId={}, user={}", contractId, payer.getUserId());
-
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new AppException("Contract not found"));
-
-            if (!"PENDING_PAYMENT".equals(contract.getContractStatus())) {
-                throw new AppException("Contract is not in pending payment status");
-            }
-
-            if (contract.getOrder().getBuyer().getUserId() != payer.getUserId()) {
-                throw new AppException("Only the buyer can pay for the contract");
-            }
-
-            // Check if payment already succeeded
-            List<Payment> successPayments = paymentRepository.findByContractIdAndPaymentStatus(
-                    contractId, "SUCCESS");
-            if (!successPayments.isEmpty()) {
-                throw new AppException("This contract has already been paid successfully");
-            }
-
-            BigDecimal amount = contract.getOrder().getTotalAmount();
-
-            // Check if there is a pending payment
-            Payment payment;
-            List<Payment> pendingPayments = paymentRepository.findByContractIdAndPaymentStatus(
-                    contractId, "PENDING");
-            
-            if (!pendingPayments.isEmpty()) {
-                payment = pendingPayments.get(0);
-                
-                if (payment.getExpiryTime() != null && payment.getExpiryTime().isBefore(LocalDateTime.now())) {
-                    payment.setPaymentStatus("EXPIRED");
-                    payment.setUpdatedAt(LocalDateTime.now());
-                    paymentRepository.save(payment);
-                    
-                    payment = createVNPayPayment(Payment.PaymentType.CONTRACT, amount, payer);
-                    payment.setContractId(contractId);
-                    payment = paymentRepository.save(payment);
-                    
-                    log.info("Old payment expired, created new payment: paymentId={}", payment.getPaymentId());
-                } else {
-                    log.info("Reusing existing pending payment: paymentId={}", payment.getPaymentId());
-                }
-            } else {
-                payment = createVNPayPayment(Payment.PaymentType.CONTRACT, amount, payer);
-                payment.setContractId(contractId);
-                payment = paymentRepository.save(payment);
-                
-                log.info("Created new payment: paymentId={}", payment.getPaymentId());
-            }
-
-            // Call VNPay service to create payment
-            String txnRef = payment.getPaymentId() + "_" + System.currentTimeMillis();
-            String paymentUrl = vnPayService.createPaymentUrl(
-                    amount,
-                    "EV Trade - Vehicle Purchase Contract #" + contract.getOrder().getOrderId(),
-                    txnRef,
-                    ipAddress,
-                    null
-            );
-
-            // Create response
-            PaymentResponse response = toPaymentResponse(payment);
-            response.setPaymentUrl(paymentUrl);
-            
-            Map<String, Object> vnpayData = new HashMap<>();
-            vnpayData.put("paymentUrl", paymentUrl);
-            vnpayData.put("txnRef", txnRef);
-            response.setGatewayResponse(vnpayData);
-
-            log.info("VNPay payment created successfully. Payment URL: {}", paymentUrl);
-
-            return BaseResponse.success(response, "VNPay payment created successfully");
-
-        } catch (Exception e) {
-            log.error("Error creating contract payment with VNPay: ", e);
-            throw new AppException("Error creating contract payment: " + e.getMessage());
-        }
-    }
-
-    @Override
     public BaseResponse<PaymentResponse> payContractAddOnWithVNPay(Long contractAddOnId, User payer, String ipAddress) {
         try {
-            log.info("Starting addon payment with VNPay: contractAddOnId={}, user={}", contractAddOnId, payer.getUserId());
+            log.info("Starting contract add-on payment with VNPay: contractAddOnId={}, user={}", contractAddOnId, payer.getUserId());
 
             ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
-                    .orElseThrow(() -> new AppException("Addon service not found"));
+                    .orElseThrow(() -> new AppException("Contract add-on not found"));
 
             Contract contract = contractAddOn.getContract();
             boolean isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId()
@@ -418,7 +377,7 @@ public class PaymentServiceImpl implements PaymentService {
             List<Payment> successPayments = paymentRepository.findByContractAddOnIdAndPaymentStatus(
                     contractAddOnId, "SUCCESS");
             if (!successPayments.isEmpty()) {
-                throw new AppException("This addon service has already been paid successfully");
+                throw new AppException("This contract add-on has already been paid successfully");
             }
 
             BigDecimal amount = contractAddOn.getFee();
@@ -456,7 +415,7 @@ public class PaymentServiceImpl implements PaymentService {
             String txnRef = payment.getPaymentId() + "_" + System.currentTimeMillis();
             String paymentUrl = vnPayService.createPaymentUrl(
                     amount,
-                    "EV Trade - Service: " + contractAddOn.getService().getName(),
+                    "EV Trade - Add-on Service: " + contractAddOn.getService().getName(),
                     txnRef,
                     ipAddress,
                     null
@@ -471,15 +430,16 @@ public class PaymentServiceImpl implements PaymentService {
             vnpayData.put("txnRef", txnRef);
             response.setGatewayResponse(vnpayData);
 
-            log.info("VNPay payment created successfully. Payment URL: {}", paymentUrl);
+            log.info("VNPay contract add-on payment created successfully. Payment URL: {}", paymentUrl);
 
-            return BaseResponse.success(response, "VNPay payment created successfully");
+            return BaseResponse.success(response, "VNPay contract add-on payment created successfully");
 
         } catch (Exception e) {
-            log.error("Error creating addon payment with VNPay: ", e);
-            throw new AppException("Error creating addon payment: " + e.getMessage());
+            log.error("Error creating contract add-on payment with VNPay: ", e);
+            throw new AppException("Error creating contract add-on payment: " + e.getMessage());
         }
     }
+
 
     @Override
     public BaseResponse<PaymentResponse> handleVNPayCallback(VNPayCallbackRequest request) {
@@ -559,9 +519,6 @@ public class PaymentServiceImpl implements PaymentService {
                 case MEMBERSHIP:
                     handleMembershipPaymentSuccess(payment);
                     break;
-                case CONTRACT:
-                    handleContractPaymentSuccess(payment);
-                    break;
                 case ADDON:
                     handleAddOnPaymentSuccess(payment);
                     break;
@@ -591,49 +548,80 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void handleMembershipPaymentSuccess(Payment payment) {
-        ListingPackage membership = listingPackageRepository.findById(payment.getListingPackageId())
-                .orElseThrow(() -> new AppException("Membership not found"));
-
-        membership.setStatus("ACTIVE");
-        listingPackageRepository.save(membership);
+        // For membership payment, we need to find the service package by amount
+        // since membership payment doesn't have listingPackageId
+        BigDecimal paymentAmount = payment.getAmount();
+        
+        // Find the service package that matches the payment amount
+        List<ServicePackage> membershipPackages = servicePackageRepository.findByPackageTypeAndStatus(
+                ServicePackage.PackageType.MEMBERSHIP, "ACTIVE");
+        
+        ServicePackage servicePackage = membershipPackages.stream()
+                .filter(pkg -> pkg.getListingFee().equals(paymentAmount))
+                .findFirst()
+                .orElseThrow(() -> new AppException("No matching membership package found for amount: " + paymentAmount));
 
         User user = payment.getPayer();
-        user.setCurrentMembershipId(membership.getListingPackageId());
-        user.setMembershipExpiry(membership.getExpiredAt());
+        
+        // Set membership info
+        user.setCurrentMembershipId(servicePackage.getPackageId());
+        
+        // Calculate expiry date based on duration
+        LocalDateTime expiryDate = LocalDateTime.now().plusDays(
+                servicePackage.getDurationDays() != null ? servicePackage.getDurationDays() : 30
+        );
+        user.setMembershipExpiry(expiryDate);
 
-        if (membership.getServicePackage().getCouponCount() != null) {
-            user.setAvailableCoupons(membership.getServicePackage().getCouponCount());
+        // Set available coupons
+        if (servicePackage.getCouponCount() != null) {
+            user.setAvailableCoupons(servicePackage.getCouponCount());
         } else {
             user.setAvailableCoupons(0);
         }
 
         userRepository.save(user);
 
-        log.info("Membership activated successfully: userId={}, membershipId={}",
-                user.getUserId(), membership.getListingPackageId());
-    }
-
-    private void handleContractPaymentSuccess(Payment payment) {
-        Contract contract = contractRepository.findById(payment.getContractId())
-                .orElseThrow(() -> new AppException("Contract not found"));
-
-        contract.setContractStatus("PAID");
-        contractRepository.save(contract);
-
-        if (contract.getOrder() != null) {
-            log.info("Order status updated to PAID: orderId={}", contract.getOrder().getOrderId());
-        }
+        log.info("Membership activated successfully: userId={}, servicePackageId={}, expiry={}",
+                user.getUserId(), servicePackage.getPackageId(), expiryDate);
     }
 
     private void handleAddOnPaymentSuccess(Payment payment) {
-        ContractAddOn contractAddOn = contractAddOnRepository.findById(payment.getContractAddOnId())
-                .orElseThrow(() -> new AppException("Contract addon not found"));
+        if (payment.getContractAddOnId() != null) {
+            // Single addon payment
+            ContractAddOn contractAddOn = contractAddOnRepository.findById(payment.getContractAddOnId())
+                    .orElseThrow(() -> new AppException("Contract addon not found"));
 
-        log.info("Addon payment completed: contractAddOnId={}, amount={}",
-                contractAddOn.getId(), contractAddOn.getFee());
+            // Update payment status
+            contractAddOn.setPaymentStatus("PAID");
+            contractAddOnRepository.save(contractAddOn);
 
-        log.info("Addon service {} has been paid successfully",
-                contractAddOn.getService().getName());
+            log.info("Add-on payment completed: contractAddOnId={}, amount={}",
+                    contractAddOn.getId(), contractAddOn.getFee());
+
+            log.info("Add-on service {} has been paid successfully",
+                    contractAddOn.getService().getName());
+        } else if (payment.getContractId() != null) {
+            // Contract addons payment - update all pending addons
+            Contract contract = contractRepository.findById(payment.getContractId())
+                    .orElseThrow(() -> new AppException("Contract not found"));
+
+            List<ContractAddOn> contractAddOns = contractAddOnRepository.findByContract(contract);
+            List<ContractAddOn> pendingAddOns = contractAddOns.stream()
+                    .filter(addon -> "PENDING".equals(addon.getPaymentStatus()))
+                    .collect(Collectors.toList());
+
+            // Update all pending addons to PAID
+            for (ContractAddOn addon : pendingAddOns) {
+                addon.setPaymentStatus("PAID");
+                contractAddOnRepository.save(addon);
+            }
+
+            log.info("Contract addons payment completed: contractId={}, amount={}, paidAddons={}",
+                    contract.getContractId(), payment.getAmount(), pendingAddOns.size());
+
+            log.info("All pending addon services for contract {} have been paid successfully",
+                    contract.getContractId());
+        }
     }
 
     // Helper methods
@@ -676,5 +664,64 @@ public class PaymentServiceImpl implements PaymentService {
                 .contractAddOnId(payment.getContractAddOnId())
                 .listingPackageId(payment.getListingPackageId())
                 .build();
+    }
+
+    @Override
+    public BaseResponse<PaymentResponse> payContractAddonsWithVNPay(Long contractId, User payer, String ipAddress) {
+        try {
+            log.info("Starting contract addons payment with VNPay: contractId={}, user={}", contractId, payer.getUserId());
+
+            Contract contract = contractRepository.findById(contractId)
+                    .orElseThrow(() -> new AppException("Contract not found"));
+
+            // Check if user is authorized
+            boolean isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId()
+                    || contract.getOrder().getSeller().getUserId() == payer.getUserId();
+
+            if (!isAuthorized) {
+                throw new AppException("You are not authorized to pay for this contract");
+            }
+
+            // Get all pending addons for this contract
+            List<ContractAddOn> contractAddOns = contractAddOnRepository.findByContract(contract);
+            List<ContractAddOn> pendingAddOns = contractAddOns.stream()
+                    .filter(addon -> "PENDING".equals(addon.getPaymentStatus()))
+                    .collect(Collectors.toList());
+
+            if (pendingAddOns.isEmpty()) {
+                throw new AppException("No pending addons found for this contract");
+            }
+
+            // Calculate total amount
+            BigDecimal totalAmount = pendingAddOns.stream()
+                    .map(ContractAddOn::getFee)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Create payment record
+            Payment payment = createVNPayPayment(Payment.PaymentType.ADDON, totalAmount, payer);
+            payment.setContractId(contractId);
+            payment = paymentRepository.save(payment);
+
+            // Generate VNPay URL
+            String vnPayUrl = vnPayService.createPaymentUrl(
+                    totalAmount,
+                    "Thanh toan addon services cho contract " + contractId,
+                    payment.getPaymentId().toString(),
+                    ipAddress,
+                    null
+            );
+
+            PaymentResponse response = toPaymentResponse(payment);
+            response.setPaymentUrl(vnPayUrl);
+
+            log.info("Contract addons payment created: paymentId={}, contractId={}, totalAmount={}, pendingAddons={}",
+                    payment.getPaymentId(), contractId, totalAmount, pendingAddOns.size());
+
+            return BaseResponse.success(response, "Contract addons payment created successfully");
+
+        } catch (Exception e) {
+            log.error("Error creating contract addons payment: ", e);
+            throw new AppException("Error creating contract addons payment: " + e.getMessage());
+        }
     }
 }

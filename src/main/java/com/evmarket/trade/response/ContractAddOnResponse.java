@@ -10,6 +10,7 @@ public class ContractAddOnResponse {
     private String serviceName;
     private BigDecimal fee;
     private LocalDateTime createdAt;
+    private String paymentStatus;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -23,6 +24,8 @@ public class ContractAddOnResponse {
     public void setFee(BigDecimal fee) { this.fee = fee; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
 }
 
 

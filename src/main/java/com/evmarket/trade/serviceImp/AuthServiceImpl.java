@@ -10,11 +10,13 @@ import com.evmarket.trade.request.ForgotPasswordRequest;
 import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.request.ResetPasswordRequest;
+import com.evmarket.trade.request.ChangePasswordRequest;
 import com.evmarket.trade.security.JwtService;
 import com.evmarket.trade.service.AuthService;
 import com.evmarket.trade.service.EmailService;
 import com.evmarket.trade.util.OTPUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -123,8 +126,8 @@ public class AuthServiceImpl implements AuthService {
         if (!request.getIdentityCard().matches("^\\d{9,20}$")) {
             throw new AppException(ErrorHandler.IDENTITY_CARD_INVALID);
         }
-        // password min 8 with at least 1 letter and 1 digit
-        if (!request.getPassword().matches("^(?=.*[A-Za-z])(?=.*\\d).{8,}$")) {
+        // password min 8 with uppercase, lowercase, digit and special character
+        if (!request.getPassword().matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
             throw new AppException(ErrorHandler.PASSWORD_WEAK);
         }
         // date of birth not in future
@@ -144,6 +147,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserInfoResponse getUserProfile(Authentication authentication) {
         User user = getCurrentUser(authentication);
+        
+        // Debug log để kiểm tra membership fields
+        log.info("User membership info - userId: {}, currentMembershipId: {}, membershipExpiry: {}, availableCoupons: {}", 
+                user.getUserId(), user.getCurrentMembershipId(), user.getMembershipExpiry(), user.getAvailableCoupons());
+        
         return UserInfoResponse.builder()
                 .userId((long) user.getUserId())
                 .fullName(user.getFullName())
@@ -156,6 +164,9 @@ public class AuthServiceImpl implements AuthService {
                 .identityCard(user.getIdentityCard())
                 .address(user.getAddress())
                 .createdAt(user.getCreatedAt())
+                .currentMembershipId(user.getCurrentMembershipId())
+                .membershipExpiry(user.getMembershipExpiry())
+                .availableCoupons(user.getAvailableCoupons())
                 .build();
     }
     
@@ -232,6 +243,48 @@ public class AuthServiceImpl implements AuthService {
             throw e;
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Unable to reset password: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public ResponseEntity<String> changePassword(ChangePasswordRequest request, Authentication authentication) {
+        try {
+            // Get current user from authentication
+            User currentUser = getCurrentUser(authentication);
+            
+            String currentPassword = request.getCurrentPassword();
+            String newPassword = request.getNewPassword();
+            String confirmPassword = request.getConfirmPassword();
+            
+            // Validate new password and confirm password match
+            if (!newPassword.equals(confirmPassword)) {
+                return ResponseEntity.badRequest().body("New password and confirm password do not match");
+            }
+            
+            // Validate current password
+            if (!passwordEncoder.matches(currentPassword, currentUser.getPassword())) {
+                return ResponseEntity.badRequest().body("Current password is incorrect");
+            }
+            
+            // Check if new password is different from current password
+            if (passwordEncoder.matches(newPassword, currentUser.getPassword())) {
+                return ResponseEntity.badRequest().body("New password must be different from current password");
+            }
+            
+            // Update password
+            currentUser.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(currentUser);
+            
+            log.info("Password changed successfully for user: {}", currentUser.getEmail());
+            
+            return ResponseEntity.ok("Password has been changed successfully");
+            
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error changing password: ", e);
+            return ResponseEntity.badRequest().body("Unable to change password: " + e.getMessage());
         }
     }
 }
