@@ -23,45 +23,45 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class AdminServiceImpl implements AdminService {
-    
+
     @Autowired
     private ListingRepository listingRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private AdminActionRepository adminActionRepository;
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private PaymentRepository paymentRepository;
-    
+
     @Autowired
     private ListingService listingService;
     @Autowired
     private AddOnServiceRepository addOnServiceRepository;
     @Autowired
     private ServicePackageRepository servicePackageRepository;
-    
+
     // ========== LISTING MANAGEMENT ==========
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<List<ListingResponse>> getAllListings(User admin) {
         try {
             // Admin cần thấy TẤT CẢ listings, không chỉ ACTIVE
             List<ListingResponse> responses = listingService.getAllListings();
-            
+
             logAdminAction(admin, "LISTING", null, "VIEW_ALL_LISTINGS");
             return BaseResponse.success(responses, "Tất cả listings được lấy thành công");
         } catch (Exception e) {
             throw new AppException("Lỗi khi lấy danh sách listings: " + e.getMessage());
         }
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<?> getAllOrders(User admin) {
@@ -73,27 +73,27 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi lấy danh sách orders: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<OrderResponse> assignStaffToOrder(Long orderId, Long staffId, User admin) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new AppException("Không tìm thấy order với ID: " + orderId));
-            
+
             // Kiểm tra staff có tồn tại không
             User staff = userRepository.findById(staffId)
                     .orElseThrow(() -> new AppException("Không tìm thấy staff với ID: " + staffId));
-            
+
             // Kiểm tra user có phải staff không (có thể thêm role check)
             if (!"STAFF".equals(staff.getRole())) {
                 throw new AppException("User không phải là staff");
             }
-            
+
             order.setAssignedStaffId(staffId);
             orderRepository.save(order);
-            
+
             logAdminAction(admin, "ORDER", orderId, "ASSIGN_STAFF");
-            
+
             // Convert to DTO
             OrderResponse orderResponse = convertOrderToResponse(order);
             return BaseResponse.success(orderResponse, "Staff đã được gán cho order thành công");
@@ -101,40 +101,40 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi gán staff cho order: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<?> setUserRole(Long userId, String role, User admin) {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new AppException("Không tìm thấy user với ID: " + userId));
-            
+
             // Validate role
             if (!isValidRole(role)) {
                 throw new AppException("Role không hợp lệ. Các role hợp lệ: USER, STAFF, ADMIN");
             }
-            
+
             // Không cho phép admin tự đổi role của mình
             if (user.getUserId() == admin.getUserId()) {
                 throw new AppException("Không thể thay đổi role của chính mình");
             }
-            
+
             String oldRole = user.getRole();
             user.setRole(role.toUpperCase());
             userRepository.save(user);
-            
+
             logAdminAction(admin, "USER", userId, "SET_ROLE");
             return BaseResponse.success(user, String.format("Role của user đã được thay đổi từ %s thành %s", oldRole, role.toUpperCase()));
         } catch (Exception e) {
             throw new AppException("Lỗi khi set role cho user: " + e.getMessage());
         }
     }
-    
+
     private boolean isValidRole(String role) {
-        return role != null && (role.equalsIgnoreCase("USER") || 
-                               role.equalsIgnoreCase("STAFF") || 
-                               role.equalsIgnoreCase("ADMIN"));
+        return role != null && (role.equalsIgnoreCase("USER") ||
+                role.equalsIgnoreCase("STAFF") ||
+                role.equalsIgnoreCase("ADMIN"));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<?> getAllUsers(User admin) {
@@ -146,7 +146,7 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi lấy danh sách users: " + e.getMessage());
         }
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<List<ListingResponse>> getListingsByStatus(String status, User admin) {
@@ -155,14 +155,14 @@ public class AdminServiceImpl implements AdminService {
             List<ListingResponse> responses = listings.stream()
                     .map(listing -> listingService.getListingById(listing.getListingId()))
                     .collect(Collectors.toList());
-            
+
             logAdminAction(admin, "LISTING", null, "VIEW_LISTINGS_BY_STATUS");
             return BaseResponse.success(responses, "Listings theo trạng thái " + status + " được lấy thành công");
         } catch (Exception e) {
             throw new AppException("Lỗi khi lấy listings theo trạng thái: " + e.getMessage());
         }
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<ListingResponse> getListingById(Long listingId, User admin) {
@@ -174,21 +174,21 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi lấy chi tiết listing: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<?> approveListing(Long listingId, User admin) {
         try {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new AppException("Không tìm thấy listing với ID: " + listingId));
-            
+
             if ("ACTIVE".equals(listing.getStatus())) {
                 return BaseResponse.error("Listing đã được duyệt rồi");
             }
-            
+
             listing.setStatus("ACTIVE");
             listing.setUpdatedAt(LocalDateTime.now());
             listingRepository.save(listing);
-            
+
             logAdminAction(admin, "LISTING", listingId, "APPROVE_LISTING");
             // Trả về DTO để tránh lỗi serialize entity (LazyInitialization/infinite recursion)
             ListingResponse dto = listingService.getListingById(listingId);
@@ -197,17 +197,17 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi duyệt listing: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<?> rejectListing(Long listingId, String reason, User admin) {
         try {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new AppException("Không tìm thấy listing với ID: " + listingId));
-            
+
             listing.setStatus("REJECTED");
             listing.setUpdatedAt(LocalDateTime.now());
             listingRepository.save(listing);
-            
+
             logAdminAction(admin, "LISTING", listingId, "REJECT_LISTING");
             ListingResponse dto = listingService.getListingById(listingId);
             return BaseResponse.success(dto, "Listing đã bị từ chối thành công");
@@ -215,17 +215,17 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi từ chối listing: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<?> suspendListing(Long listingId, String reason, User admin) {
         try {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new AppException("Không tìm thấy listing với ID: " + listingId));
-            
+
             listing.setStatus("SUSPENDED");
             listing.setUpdatedAt(LocalDateTime.now());
             listingRepository.save(listing);
-            
+
             logAdminAction(admin, "LISTING", listingId, "SUSPEND_LISTING");
             ListingResponse dto = listingService.getListingById(listingId);
             return BaseResponse.success(dto, "Listing đã bị tạm dừng thành công");
@@ -233,16 +233,16 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi tạm dừng listing: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<?> deleteListing(Long listingId, User admin) {
         try {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new AppException("Không tìm thấy listing với ID: " + listingId));
-            
+
             // Log trước khi xóa
             logAdminAction(admin, "LISTING", listingId, "DELETE_LISTING");
-            
+
             listingRepository.delete(listing);
             return BaseResponse.success(null, "Listing đã được xóa thành công");
         } catch (Exception e) {
@@ -287,28 +287,28 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi set trạng thái listing: " + e.getMessage());
         }
     }
-    
+
     // ========== USER MANAGEMENT ==========
-    
+
     @Override
     public BaseResponse<?> updateUserStatus(Long userId, String status, User admin) {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new AppException("Không tìm thấy user với ID: " + userId));
-            
+
             String oldStatus = user.getStatus();
             user.setStatus(status);
             userRepository.save(user);
-            
+
             logAdminAction(admin, "USER", userId, "UPDATE_USER_STATUS");
             return BaseResponse.success(user, "Trạng thái user đã được cập nhật từ " + oldStatus + " thành " + status);
         } catch (Exception e) {
             throw new AppException("Lỗi khi cập nhật trạng thái user: " + e.getMessage());
         }
     }
-    
+
     // ========== ADMIN ACTIONS LOG ==========
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<?> getAdminActions(User admin) {
@@ -320,58 +320,55 @@ public class AdminServiceImpl implements AdminService {
             throw new AppException("Lỗi khi lấy log admin actions: " + e.getMessage());
         }
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<?> getSystemStatistics(User admin) {
         try {
             Map<String, Object> statistics = new HashMap<>();
-            
+
             // Thống kê listings
             statistics.put("totalListings", listingRepository.count());
             statistics.put("activeListings", listingRepository.findByStatus("ACTIVE").size());
             statistics.put("pendingListings", listingRepository.findByStatus("PENDING").size());
             statistics.put("rejectedListings", listingRepository.findByStatus("REJECTED").size());
             statistics.put("suspendedListings", listingRepository.findByStatus("SUSPENDED").size());
-            
+
             // Thống kê users
             statistics.put("totalUsers", userRepository.count());
             statistics.put("activeUsers", userRepository.findByStatus("ACTIVE").size());
             statistics.put("inactiveUsers", userRepository.findByStatus("INACTIVE").size());
-            
+
             // Thống kê orders
             statistics.put("totalOrders", orderRepository.count());
-            
+
             // Thống kê payments
             statistics.put("totalPayments", paymentRepository.count());
-            
+
             logAdminAction(admin, "STATISTICS", null, "VIEW_SYSTEM_STATISTICS");
             return BaseResponse.success(statistics, "Thống kê hệ thống được lấy thành công");
         } catch (Exception e) {
             throw new AppException("Lỗi khi lấy thống kê hệ thống: " + e.getMessage());
         }
     }
-    
+
     // ========== HELPER METHODS ==========
-    
+
     private OrderResponse convertOrderToResponse(Order order) {
         return OrderResponse.builder()
                 .orderId(order.getOrderId())
                 .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
                 .buyer(convertUserToUserInfo(order.getBuyer()))
                 .seller(convertUserToUserInfo(order.getSeller()))
-                .basePrice(order.getBasePrice())
-                .commissionFee(order.getCommissionFee())
-                .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .orderDate(order.getOrderDate())
                 .assignedStaffId(order.getAssignedStaffId())
                 .build();
     }
-    
+
     private UserInfoResponse convertUserToUserInfo(User user) {
         if (user == null) return null;
-        
+
         return UserInfoResponse.builder()
                 .userId((long) user.getUserId())
                 .username(user.getUsername())
@@ -386,7 +383,7 @@ public class AdminServiceImpl implements AdminService {
                 .createdAt(user.getCreatedAt())
                 .build();
     }
-    
+
     private void logAdminAction(User admin, String targetType, Long targetId, String action) {
         try {
             AdminAction adminAction = new AdminAction();

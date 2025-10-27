@@ -20,22 +20,22 @@ import java.util.List;
 @Service
 @Transactional
 public class BuyerServiceImpl implements BuyerService {
-    
+
     @Autowired
     private ListingRepository listingRepository;
-    
+
     @Autowired
     private VehicleRepository vehicleRepository;
-    
+
     @Autowired
     private BatteryRepository batteryRepository;
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     // Browse listings
     @Override
     public BaseResponse<List<Listing>> getAllActiveListings() {
@@ -46,7 +46,7 @@ public class BuyerServiceImpl implements BuyerService {
             throw new AppException("Failed to retrieve listings: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<List<Listing>> getListingsByType(String itemType) {
         try {
@@ -59,7 +59,7 @@ public class BuyerServiceImpl implements BuyerService {
             throw new AppException("Failed to retrieve listings: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<List<Listing>> searchListings(String keyword) {
         try {
@@ -69,7 +69,7 @@ public class BuyerServiceImpl implements BuyerService {
             throw new AppException("Failed to search listings: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<List<Listing>> getListingsByLocation(String location) {
         try {
@@ -79,91 +79,92 @@ public class BuyerServiceImpl implements BuyerService {
             throw new AppException("Failed to retrieve listings by location: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<Listing> getListingDetails(Long listingId) {
         try {
             Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new AppException("Listing not found"));
-            
+                    .orElseThrow(() -> new AppException("Listing not found"));
+
             if (!"ACTIVE".equals(listing.getStatus())) {
                 throw new AppException("Listing is not active");
             }
-            
+
             return BaseResponse.success(listing, "Listing details retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve listing details: " + e.getMessage());
         }
     }
-    
+
     // Get item details
     @Override
     public BaseResponse<Vehicle> getVehicleDetails(Long vehicleId) {
         try {
             Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new AppException("Vehicle not found"));
-            
+                    .orElseThrow(() -> new AppException("Vehicle not found"));
+
             return BaseResponse.success(vehicle, "Vehicle details retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve vehicle details: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<Battery> getBatteryDetails(Long batteryId) {
         try {
             Battery battery = batteryRepository.findById(batteryId)
-                .orElseThrow(() -> new AppException("Battery not found"));
-            
+                    .orElseThrow(() -> new AppException("Battery not found"));
+
             return BaseResponse.success(battery, "Battery details retrieved successfully");
         } catch (Exception e) {
             throw new AppException("Failed to retrieve battery details: " + e.getMessage());
         }
     }
-    
+
     // Order management
     @Override
     public BaseResponse<OrderResponse> createOrder(OrderRequest request, User buyer) {
         try {
             Listing listing = listingRepository.findById(request.getListingId())
-                .orElseThrow(() -> new AppException("Listing not found"));
-            
+                    .orElseThrow(() -> new AppException("Listing not found"));
+
             if (!"ACTIVE".equals(listing.getStatus())) {
                 throw new AppException("Listing is not active");
             }
-            
+
             // Check if buyer is not the seller
             if (listing.getUser().getUserId() == buyer.getUserId()) {
                 throw new AppException("You cannot order your own listing");
             }
-            
+
             // Check if there are any pending orders for this listing
             List<Order> pendingOrders = orderRepository.findPendingByListing(listing);
             if (!pendingOrders.isEmpty()) {
                 throw new AppException("This listing already has pending orders");
             }
-            
-            // Calculate commission fee (5% of base price)
-            BigDecimal commissionFee = request.getBasePrice().multiply(new BigDecimal("0.05"));
-            BigDecimal totalAmount = request.getBasePrice().add(commissionFee);
-            
+
+            // Get base price from listing and calculate commission fee (5% of base price)
+            BigDecimal basePrice = listing.getPrice();
+            BigDecimal commissionFee = basePrice.multiply(new BigDecimal("0.05"));
+            BigDecimal totalAmount = basePrice.add(commissionFee);
+
             Order order = new Order();
             order.setBuyer(buyer);
             order.setSeller(listing.getUser());
             order.setListing(listing);
             order.setOrderDate(LocalDateTime.now());
-            order.setStatus("PENDING");
-            order.setBasePrice(request.getBasePrice());
+            order.setStatus("SUCCESS");
+            order.setBasePrice(basePrice);
             order.setCommissionFee(commissionFee);
             order.setTotalAmount(totalAmount);
-            
+
             Order savedOrder = orderRepository.save(order);
             return BaseResponse.success(convertToOrderResponse(savedOrder), "Order created successfully");
         } catch (Exception e) {
             throw new AppException("Failed to create order: " + e.getMessage());
         }
     }
-    
+
     @Override
     public BaseResponse<List<OrderResponse>> getMyOrders(User buyer) {
         try {
@@ -173,52 +174,52 @@ public class BuyerServiceImpl implements BuyerService {
             throw new AppException("Failed to retrieve orders: " + e.getMessage());
         }
     }
-    
-    
+
+
     @Override
     public BaseResponse<Void> cancelOrder(Long orderId, User buyer) {
         try {
             Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException("Order not found"));
-            
+                    .orElseThrow(() -> new AppException("Order not found"));
+
             if (order.getBuyer().getUserId() != buyer.getUserId()) {
                 throw new AppException("You can only cancel your own orders");
             }
-            
+
             if (!"PENDING".equals(order.getStatus())) {
                 throw new AppException("Only pending orders can be cancelled");
             }
-            
+
             order.setStatus("CANCELLED");
             orderRepository.save(order);
-            
+
             return BaseResponse.success(null, "Order cancelled successfully");
         } catch (Exception e) {
             throw new AppException("Failed to cancel order: " + e.getMessage());
         }
     }
-    
+
     // Contact information (only for battery purchases)
     @Override
     public BaseResponse<ContactResponse> getSellerContactInfo(Long orderId, User buyer) {
         try {
             Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException("Order not found"));
-            
+                    .orElseThrow(() -> new AppException("Order not found"));
+
             if (order.getBuyer().getUserId() != buyer.getUserId()) {
                 throw new AppException("You can only view contact info for your own orders");
             }
-            
+
             // Only allow contact info for battery purchases
             if (!"battery".equals(order.getListing().getItemType())) {
                 throw new AppException("Contact information is only available for battery purchases");
             }
-            
+
             // Only show contact info after order is confirmed
             if (!"CONFIRMED".equals(order.getStatus()) && !"COMPLETED".equals(order.getStatus())) {
                 throw new AppException("Contact information is only available for confirmed orders");
             }
-            
+
             User seller = order.getSeller();
             ContactResponse contact = ContactResponse.builder()
                     .fullName(seller.getFullName())
@@ -237,9 +238,6 @@ public class BuyerServiceImpl implements BuyerService {
                 .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
                 .buyer(convertUser(order.getBuyer()))
                 .seller(convertUser(order.getSeller()))
-                .basePrice(order.getBasePrice())
-                .commissionFee(order.getCommissionFee())
-                .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .orderDate(order.getOrderDate())
                 .build();
@@ -262,4 +260,3 @@ public class BuyerServiceImpl implements BuyerService {
                 .build();
     }
 }
-

@@ -24,7 +24,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private ListingRepository listingRepository;
 
@@ -32,7 +32,7 @@ public class OrderServiceImpl implements OrderService {
     public Order createOrder(CreateOrderRequest request, User buyer) {
         Listing listing = listingRepository.findById(request.getListingId())
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + request.getListingId()));
-        
+
         if (!"ACTIVE".equals(listing.getStatus())) {
             throw new RuntimeException("Listing is not available for ordering");
         }
@@ -48,20 +48,20 @@ public class OrderServiceImpl implements OrderService {
         order.setListing(listing);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus("PENDING");
-        
+
         // Calculate prices based on item type
         BigDecimal basePrice = getItemPrice(listing);
         BigDecimal commissionFee = calculateCommissionFee(basePrice);
         BigDecimal totalAmount = basePrice.add(commissionFee);
-        
+
         order.setBasePrice(basePrice);
         order.setCommissionFee(commissionFee);
         order.setTotalAmount(totalAmount);
-        
+
         // Update listing status to prevent multiple orders
         listing.setStatus("PENDING");
         listingRepository.save(listing);
-        
+
         return orderRepository.save(order);
     }
 
@@ -122,9 +122,6 @@ public class OrderServiceImpl implements OrderService {
                 .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
                 .buyer(convertUser(order.getBuyer()))
                 .seller(convertUser(order.getSeller()))
-                .basePrice(order.getBasePrice())
-                .commissionFee(order.getCommissionFee())
-                .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .orderDate(order.getOrderDate())
                 .build();

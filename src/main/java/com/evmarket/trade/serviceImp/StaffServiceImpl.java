@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class StaffServiceImpl implements StaffService {
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<List<OrderResponse>> getAssignedOrders(User staff) {
@@ -35,26 +35,23 @@ public class StaffServiceImpl implements StaffService {
             throw new AppException("Lỗi khi lấy danh sách orders được gán: " + e.getMessage());
         }
     }
-    
-    
+
+
     private OrderResponse convertToResponse(Order order) {
         return OrderResponse.builder()
                 .orderId(order.getOrderId())
                 .listingId(order.getListing() != null ? order.getListing().getListingId() : null)
                 .buyer(convertUserToUserInfo(order.getBuyer()))
                 .seller(convertUserToUserInfo(order.getSeller()))
-                .basePrice(order.getBasePrice())
-                .commissionFee(order.getCommissionFee())
-                .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .orderDate(order.getOrderDate())
                 .assignedStaffId(order.getAssignedStaffId())
                 .build();
     }
-    
+
     private UserInfoResponse convertUserToUserInfo(User user) {
         if (user == null) return null;
-        
+
         return UserInfoResponse.builder()
                 .userId((long) user.getUserId())
                 .username(user.getUsername())
