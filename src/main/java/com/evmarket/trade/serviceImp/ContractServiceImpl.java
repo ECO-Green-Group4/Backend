@@ -2,9 +2,11 @@ package com.evmarket.trade.serviceImp;
 
 import com.evmarket.trade.entity.Contract;
 import com.evmarket.trade.entity.Order;
+import com.evmarket.trade.entity.Listing;
 import com.evmarket.trade.entity.User;
 import com.evmarket.trade.repository.ContractRepository;
 import com.evmarket.trade.repository.OrderRepository;
+import com.evmarket.trade.repository.ListingRepository;
 import com.evmarket.trade.request.ContractSignRequest;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.response.ContractResponse;
@@ -29,6 +31,9 @@ public class ContractServiceImpl implements ContractService {
     
     @Autowired
     private OrderRepository orderRepository;
+    
+    @Autowired
+    private ListingRepository listingRepository;
     
     private final Map<Long, String> otpStorage = new HashMap<>();
 
@@ -119,6 +124,18 @@ public class ContractServiceImpl implements ContractService {
                 // Check if both parties have signed
                 if (Boolean.TRUE.equals(contract.getSignedByBuyer()) && Boolean.TRUE.equals(contract.getSignedBySeller())) {
                     contract.setContractStatus("SIGNED");
+                    
+                    // When contract is fully signed, mark order as COMPLETED and take down the listing
+                    Listing listing = order.getListing();
+                    if (listing != null) {
+                        listing.setStatus("SOLD");
+                        listing.setUpdatedAt(java.time.LocalDateTime.now());
+                        listingRepository.save(listing);
+                    }
+                    
+                    // Update order status
+                    order.setStatus("COMPLETED");
+                    orderRepository.save(order);
                 }
             }
             

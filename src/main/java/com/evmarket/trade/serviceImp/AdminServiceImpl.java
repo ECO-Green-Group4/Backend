@@ -45,6 +45,9 @@ public class AdminServiceImpl implements AdminService {
     private AddOnServiceRepository addOnServiceRepository;
     @Autowired
     private ServicePackageRepository servicePackageRepository;
+    
+    @Autowired
+    private ListingPackageRepository listingPackageRepository;
 
     // ========== LISTING MANAGEMENT ==========
 
@@ -185,6 +188,11 @@ public class AdminServiceImpl implements AdminService {
                 return BaseResponse.error("Listing đã được duyệt rồi");
             }
 
+            // Kiểm tra thanh toán nếu listing có sử dụng package
+            if (!validateListingPayment(listing)) {
+                return BaseResponse.error("Không thể duyệt listing: Seller chưa thanh toán cho gói dịch vụ đã chọn");
+            }
+
             listing.setStatus("ACTIVE");
             listing.setUpdatedAt(LocalDateTime.now());
             listingRepository.save(listing);
@@ -256,6 +264,11 @@ public class AdminServiceImpl implements AdminService {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new AppException("Không tìm thấy listing với ID: " + listingId));
 
+            // Nếu đang duyệt (approved = true), kiểm tra thanh toán
+            if (approved && !validateListingPayment(listing)) {
+                return BaseResponse.error("Không thể duyệt listing: Seller chưa thanh toán cho gói dịch vụ đã chọn");
+            }
+
             String newStatus = approved ? "ACTIVE" : "REJECTED";
             listing.setStatus(newStatus);
             listing.setUpdatedAt(LocalDateTime.now());
@@ -275,6 +288,11 @@ public class AdminServiceImpl implements AdminService {
             Listing listing = listingRepository.findById(listingId)
                     .orElseThrow(() -> new AppException("Không tìm thấy listing với ID: " + listingId));
 
+            // Nếu đang set ACTIVE (approved = true), kiểm tra thanh toán
+            if (approved && !validateListingPayment(listing)) {
+                return BaseResponse.error("Không thể set ACTIVE: Seller chưa thanh toán cho gói dịch vụ đã chọn");
+            }
+
             String newStatus = approved ? "ACTIVE" : "REJECTED";
             listing.setStatus(newStatus);
             listing.setUpdatedAt(LocalDateTime.now());
@@ -286,6 +304,38 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             throw new AppException("Lỗi khi set trạng thái listing: " + e.getMessage());
         }
+    }
+
+    // ========== PAYMENT VALIDATION ==========
+    
+    /**
+     * Kiểm tra xem listing có packageId và đã thanh toán chưa
+     * @param listing Listing cần kiểm tra
+     * @return true nếu không có packageId hoặc đã thanh toán, false nếu có packageId nhưng chưa thanh toán
+     */
+    private boolean validateListingPayment(Listing listing) {
+        // Tìm ListingPackage liên kết với listing này
+        List<ListingPackage> listingPackages = listingPackageRepository.findByListing(listing);
+        
+        // Nếu không có ListingPackage nào, có nghĩa là listing không sử dụng package
+        if (listingPackages.isEmpty()) {
+            return true;
+        }
+        
+        // Kiểm tra xem có ListingPackage nào đã được thanh toán thành công không
+        for (ListingPackage listingPackage : listingPackages) {
+            // Tìm payment thành công cho ListingPackage này
+            List<Payment> payments = paymentRepository.findByListingPackageIdAndPaymentStatus(
+                listingPackage.getListingPackageId(), "SUCCESS");
+            
+            if (!payments.isEmpty()) {
+                // Có ít nhất 1 payment thành công
+                return true;
+            }
+        }
+        
+        // Có ListingPackage nhưng chưa có payment thành công nào
+        return false;
     }
 
     // ========== USER MANAGEMENT ==========
