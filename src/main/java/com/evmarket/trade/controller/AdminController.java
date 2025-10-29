@@ -197,13 +197,14 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateAddOnService(serviceId, request, admin));
     }
 
-    @PatchMapping("/addon/services/{serviceId}/status")
+
+    @PutMapping("/addon/services/{serviceId}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BaseResponse<?>> changeAddOnServiceStatus(@PathVariable Long serviceId,
-                                                                    @RequestParam String value,
-                                                                    Authentication authentication) {
+    public ResponseEntity<BaseResponse<?>> setAddOnServiceStatus(@PathVariable Long serviceId,
+                                                                @RequestParam("active") boolean active,
+                                                                Authentication authentication) {
         User admin = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(adminService.changeAddOnServiceStatus(serviceId, value, admin));
+        return ResponseEntity.ok(adminService.setAddOnServiceStatus(serviceId, active, admin));
     }
 
     @GetMapping("/addon/services")

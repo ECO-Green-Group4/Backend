@@ -410,7 +410,7 @@ public class AdminServiceImpl implements AdminService {
             service.setName(request.getName());
             service.setDescription(request.getDescription());
             service.setDefaultFee(request.getFee());
-            service.setStatus(request.getStatus());
+            service.setStatus("ACTIVE"); // Automatically set status to ACTIVE
             AddOnService saved = addOnServiceRepository.save(service);
             logAdminAction(admin, "ADDON_SERVICE", saved.getServiceId(), "CREATE_ADDON_SERVICE");
             return BaseResponse.success(saved, "Add-on service created successfully");
@@ -427,7 +427,6 @@ public class AdminServiceImpl implements AdminService {
             if (request.getName() != null) service.setName(request.getName());
             if (request.getDescription() != null) service.setDescription(request.getDescription());
             if (request.getFee() != null) service.setDefaultFee(request.getFee());
-            if (request.getStatus() != null) service.setStatus(request.getStatus());
             AddOnService saved = addOnServiceRepository.save(service);
             logAdminAction(admin, "ADDON_SERVICE", saved.getServiceId(), "UPDATE_ADDON_SERVICE");
             return BaseResponse.success(saved, "Add-on service updated successfully");
@@ -447,6 +446,23 @@ public class AdminServiceImpl implements AdminService {
             return BaseResponse.success(saved, "Add-on service status updated successfully");
         } catch (Exception e) {
             throw new AppException("Failed to change add-on service status: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public BaseResponse<?> setAddOnServiceStatus(Long serviceId, boolean active, User admin) {
+        try {
+            AddOnService service = addOnServiceRepository.findById(serviceId)
+                    .orElseThrow(() -> new AppException("Add-on service not found"));
+
+            String newStatus = active ? "ACTIVE" : "INACTIVE";
+            service.setStatus(newStatus);
+            AddOnService saved = addOnServiceRepository.save(service);
+            
+            logAdminAction(admin, "ADDON_SERVICE", saved.getServiceId(), active ? "SET_ADDON_SERVICE_ACTIVE" : "SET_ADDON_SERVICE_INACTIVE");
+            return BaseResponse.success(saved, active ? "Add-on service đã được set ACTIVE" : "Add-on service đã được set INACTIVE");
+        } catch (Exception e) {
+            throw new AppException("Failed to set add-on service status: " + e.getMessage());
         }
     }
 
