@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/buyer/listings/**").permitAll()
                         .requestMatchers("/api/stripe/webhook").permitAll()  // Allow Stripe webhook
                         .requestMatchers("/api/payments/vnpay-callback").permitAll()  // Allow VNPay callback
+                        .requestMatchers("/api/payments/vnpay-frontend-callback").permitAll()  // Allow VNPay frontend callback
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )

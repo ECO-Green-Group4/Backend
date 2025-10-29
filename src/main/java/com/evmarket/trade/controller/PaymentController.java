@@ -110,6 +110,25 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.handleVNPayCallback(request));
     }
 
+    @GetMapping("/vnpay-frontend-callback")
+    public ResponseEntity<BaseResponse<PaymentResponse>> vnPayFrontendCallback(
+            @ModelAttribute VNPayCallbackRequest request) {
+        log.info("Received VNPay frontend callback: txnRef={}, responseCode={}",
+                request.getVnp_TxnRef(), request.getVnp_ResponseCode());
+        
+        // Process the callback and update payment status
+        BaseResponse<PaymentResponse> result = paymentService.handleVNPayCallback(request);
+        
+        // Redirect to frontend with payment status
+        String frontendUrl = "http://localhost:5173/waiting?status=" + 
+            (request.isSuccess() ? "success" : "failed") + 
+            "&paymentId=" + request.getVnp_TxnRef().split("_")[0];
+        
+        return ResponseEntity.status(302)
+                .header("Location", frontendUrl)
+                .body(result);
+    }
+
     @GetMapping("/history")
     public ResponseEntity<BaseResponse<List<PaymentResponse>>> getPaymentHistory(
             Authentication authentication) {
