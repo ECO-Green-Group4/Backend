@@ -257,11 +257,12 @@ public class ListingServiceImpl implements ListingService {
     }
 
     @Override
-    public Listing updateListingStatus(Long listingId, String status) {
+    public ListingResponse updateListingStatus(Long listingId, String status) {
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + listingId));
         listing.setStatus(status);
-        return listingRepository.save(listing);
+        Listing saved = listingRepository.save(listing);
+        return convertToResponse(saved);
     }
     
 

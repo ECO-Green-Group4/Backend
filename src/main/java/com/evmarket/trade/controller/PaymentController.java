@@ -118,12 +118,23 @@ public class PaymentController {
         
         // Process the callback and update payment status
         BaseResponse<PaymentResponse> result = paymentService.handleVNPayCallback(request);
-        
-        // Redirect to frontend with payment status
-        String frontendUrl = "http://localhost:5173/waiting?status=" + 
-            (request.isSuccess() ? "success" : "failed") + 
-            "&paymentId=" + request.getVnp_TxnRef().split("_")[0];
-        
+
+        // Build redirect target based on payment type
+        String status = request.isSuccess() ? "success" : "failed";
+        String paymentId = request.getVnp_TxnRef().contains("_")
+                ? request.getVnp_TxnRef().substring(0, request.getVnp_TxnRef().indexOf("_"))
+                : request.getVnp_TxnRef();
+
+        String frontendUrl;
+        PaymentResponse data = result.getData();
+        if (data != null && data.getPaymentType() != null && data.getPaymentType().equalsIgnoreCase("ADDON")) {
+            // For ADDON payments, redirect straight to Home
+            frontendUrl = "http://localhost:5173/";
+        } else {
+            // Default behavior (e.g., PACKAGE/MEMBERSHIP): redirect to waiting page
+            frontendUrl = "http://localhost:5173/waiting?status=" + status + "&paymentId=" + paymentId;
+        }
+
         return ResponseEntity.status(302)
                 .header("Location", frontendUrl)
                 .body(result);

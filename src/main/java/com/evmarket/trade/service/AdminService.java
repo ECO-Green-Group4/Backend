@@ -23,7 +23,7 @@ public interface AdminService {
     /**
      * Lấy tất cả orders trong hệ thống
      */
-    BaseResponse<?> getAllOrders(User admin);
+    BaseResponse<java.util.List<OrderResponse>> getAllOrders(User admin);
 
     /**
      * Gán staff cho order
@@ -103,6 +103,7 @@ public interface AdminService {
     BaseResponse<?> createAddOnService(CreateAddOnServiceRequest request, User admin);
     BaseResponse<?> updateAddOnService(Long serviceId, UpdateAddOnServiceRequest request, User admin);
     BaseResponse<?> changeAddOnServiceStatus(Long serviceId, String status, User admin);
+    BaseResponse<?> setAddOnServiceStatus(Long serviceId, boolean active, User admin);
     BaseResponse<?> getAllAddOnServices(User admin);
     BaseResponse<?> deleteAddOnService(Long serviceId, User admin);
 

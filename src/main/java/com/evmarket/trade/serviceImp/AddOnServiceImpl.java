@@ -106,6 +106,64 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
     }
 
     @Override
+    public BaseResponse<List<ContractAddOnResponse>> createContractAddOns(ContractAddOnsRequest request, User user) {
+        try {
+            Contract contract = contractRepository.findById(request.getContractId())
+                    .orElseThrow(() -> new AppException("Contract not found"));
+
+            if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
+                throw new AppException("Only staff can add services to contracts");
+            }
+
+            String contractStatus = contract.getContractStatus();
+            if (contractStatus == null ||
+                    (!"DRAFT".equals(contractStatus) &&
+                            !"PENDING_SIGNATURE".equals(contractStatus) &&
+                            !"SIGNED".equals(contractStatus))) {
+                throw new AppException("Add-on services can only be added to contracts in DRAFT, PENDING_SIGNATURE, or SIGNED status");
+            }
+
+            if (request.getServiceIds() == null || request.getServiceIds().isEmpty()) {
+                throw new AppException("No service IDs provided");
+            }
+
+            List<Long> distinctServiceIds = request.getServiceIds().stream().distinct().collect(Collectors.toList());
+
+            List<ContractAddOnResponse> created = new ArrayList<>();
+
+            for (Long serviceId : distinctServiceIds) {
+                AddOnService service = addOnServiceRepository.findById(serviceId)
+                        .orElseThrow(() -> new AppException("Add-on service not found: " + serviceId));
+
+                if (!"ACTIVE".equals(service.getStatus())) {
+                    throw new AppException("Add-on service is not available: " + service.getName());
+                }
+
+                List<ContractAddOn> existingAddOns = contractAddOnRepository.findByContractAndService(contract, service);
+                if (!existingAddOns.isEmpty()) {
+                    // Skip duplicates silently; alternatively, throw. Here we skip to allow partial success per batch.
+                    continue;
+                }
+
+                ContractAddOn contractAddOn = new ContractAddOn();
+                contractAddOn.setContract(contract);
+                contractAddOn.setService(service);
+                contractAddOn.setFee(service.getDefaultFee());
+                contractAddOn.setCreatedAt(LocalDateTime.now());
+                contractAddOn.setPaymentStatus("PENDING");
+
+                ContractAddOn saved = contractAddOnRepository.save(contractAddOn);
+                updateContractAddonIds(contract, saved.getId());
+                created.add(toResponse(saved));
+            }
+
+            return BaseResponse.success(created, "Contract add-ons created successfully");
+        } catch (Exception e) {
+            throw new AppException("Failed to create contract add-ons: " + e.getMessage());
+        }
+    }
+
+    @Override
     public BaseResponse<List<ContractAddOnResponse>> getContractAddOns(Long contractId, User user) {
         try {
             Contract contract = contractRepository.findById(contractId)

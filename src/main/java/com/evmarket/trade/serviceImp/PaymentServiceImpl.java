@@ -543,12 +543,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         listingPackage.setStatus("ACTIVE");
         listingPackageRepository.save(listingPackage);
-
-        Listing listing = listingPackage.getListing();
-        if (listing != null) {
-            listing.setStatus("ACTIVE");
-            listingRepository.save(listing);
-        }
+        // Do not auto-activate the listing here. Admin must approve after payment.
     }
 
     private void handleMembershipPaymentSuccess(Payment payment) {

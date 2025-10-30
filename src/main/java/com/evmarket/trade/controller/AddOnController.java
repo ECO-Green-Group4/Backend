@@ -35,6 +35,12 @@ public class AddOnController {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(addOnService.createContractAddOn(request, user));
     }
+
+    @PostMapping("/contract-addon/batch")
+    public ResponseEntity<BaseResponse<?>> createContractAddOns(@Valid @RequestBody ContractAddOnsRequest request, Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(addOnService.createContractAddOns(request, user));
+    }
     
     @GetMapping("/contract/{contractId}/addons")
     public ResponseEntity<BaseResponse<?>> getContractAddOns(@PathVariable Long contractId, Authentication authentication) {

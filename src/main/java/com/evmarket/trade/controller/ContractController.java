@@ -62,6 +62,20 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getMyContracts(user));
     }
     
+    // New: contract details combining my-contracts and contract addons
+    @GetMapping("/contractDetails")
+    public ResponseEntity<BaseResponse<?>> getMyContractDetails(Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(contractService.getMyContractDetails(user));
+    }
+
+    // New: contract details by contractId
+    @GetMapping("/contractDetails/{contractId}")
+    public ResponseEntity<BaseResponse<?>> getContractDetailsById(@PathVariable Long contractId, Authentication authentication) {
+        User user = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(contractService.getContractDetailsById(contractId, user));
+    }
+    
     @PutMapping("/{contractId}/cancel")
     public ResponseEntity<BaseResponse<?>> cancelContract(@PathVariable Long contractId, Authentication authentication) {
         User user = authService.getCurrentUser(authentication);

@@ -5,11 +5,14 @@ import com.evmarket.trade.entity.Order;
 import com.evmarket.trade.entity.Listing;
 import com.evmarket.trade.entity.User;
 import com.evmarket.trade.repository.ContractRepository;
+import com.evmarket.trade.repository.ContractAddOnRepository;
 import com.evmarket.trade.repository.OrderRepository;
 import com.evmarket.trade.repository.ListingRepository;
 import com.evmarket.trade.request.ContractSignRequest;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.response.ContractResponse;
+import com.evmarket.trade.response.ContractDetailsResponse;
+import com.evmarket.trade.response.ContractAddOnResponse;
 import com.evmarket.trade.service.ContractService;
 import com.evmarket.trade.util.OTPUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,9 @@ public class ContractServiceImpl implements ContractService {
     
     @Autowired
     private ListingRepository listingRepository;
+    
+    @Autowired
+    private ContractAddOnRepository contractAddOnRepository;
     
     private final Map<Long, String> otpStorage = new HashMap<>();
 
@@ -190,6 +196,79 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public BaseResponse<List<ContractDetailsResponse>> getMyContractDetails(User user) {
+        try {
+            // Lấy các hợp đồng mà user là buyer hoặc seller
+            List<Contract> contracts = contractRepository.findAll().stream()
+                    .filter(contract -> {
+                        Order order = contract.getOrder();
+                        return user.getUserId() == order.getBuyer().getUserId() ||
+                               user.getUserId() == order.getSeller().getUserId();
+                    })
+                    .collect(Collectors.toList());
+
+            List<ContractDetailsResponse> responses = contracts.stream()
+                    .map(contract -> {
+                        List<ContractAddOnResponse> addons = contractAddOnRepository.findByContract(contract)
+                                .stream()
+                                .map(this::toContractAddOnResponse)
+                                .collect(Collectors.toList());
+
+                        Order order = contract.getOrder();
+                        return ContractDetailsResponse.builder()
+                                .contractId(contract.getContractId())
+                                .orderId(order != null ? order.getOrderId() : null)
+                                .status(contract.getContractStatus())
+                                .sellerSigned(Boolean.TRUE.equals(contract.getSignedBySeller()))
+                                .buyerSigned(Boolean.TRUE.equals(contract.getSignedByBuyer()))
+                                .signedAt(contract.getSignedAt())
+                                .createdAt(contract.getSignedAt())
+                                .addons(addons)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+            return BaseResponse.success(responses, "Contract details retrieved successfully");
+        } catch (Exception e) {
+            return BaseResponse.error("Failed to get contract details: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public BaseResponse<ContractDetailsResponse> getContractDetailsById(Long contractId, User user) {
+        try {
+            Contract contract = contractRepository.findById(contractId)
+                    .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
+
+            // Authorization: user must be buyer or seller of the order
+            Order order = contract.getOrder();
+            if (order == null || (user.getUserId() != order.getBuyer().getUserId() && user.getUserId() != order.getSeller().getUserId())) {
+                throw new RuntimeException("User is not authorized to view this contract");
+            }
+
+            List<ContractAddOnResponse> addons = contractAddOnRepository.findByContract(contract)
+                    .stream()
+                    .map(this::toContractAddOnResponse)
+                    .collect(Collectors.toList());
+
+            ContractDetailsResponse response = ContractDetailsResponse.builder()
+                    .contractId(contract.getContractId())
+                    .orderId(order.getOrderId())
+                    .status(contract.getContractStatus())
+                    .sellerSigned(Boolean.TRUE.equals(contract.getSignedBySeller()))
+                    .buyerSigned(Boolean.TRUE.equals(contract.getSignedByBuyer()))
+                    .signedAt(contract.getSignedAt())
+                    .createdAt(contract.getSignedAt())
+                    .addons(addons)
+                    .build();
+
+            return BaseResponse.success(response, "Contract details retrieved successfully");
+        } catch (Exception e) {
+            return BaseResponse.error("Failed to get contract details: " + e.getMessage());
+        }
+    }
+
+    @Override
     public BaseResponse<Void> cancelContract(Long contractId, User user) {
         try {
             Contract contract = contractRepository.findById(contractId)
@@ -242,5 +321,17 @@ public class ContractServiceImpl implements ContractService {
                 .signedAt(contract.getSignedAt())
                 .createdAt(contract.getSignedAt())
                 .build();
+    }
+
+    private ContractAddOnResponse toContractAddOnResponse(com.evmarket.trade.entity.ContractAddOn entity) {
+        ContractAddOnResponse r = new ContractAddOnResponse();
+        r.setId(entity.getId());
+        r.setContractId(entity.getContract() != null ? entity.getContract().getContractId() : null);
+        r.setServiceId(entity.getService() != null ? entity.getService().getServiceId() : null);
+        r.setServiceName(entity.getService() != null ? entity.getService().getName() : null);
+        r.setFee(entity.getFee());
+        r.setCreatedAt(entity.getCreatedAt());
+        r.setPaymentStatus(entity.getPaymentStatus());
+        return r;
     }
 }

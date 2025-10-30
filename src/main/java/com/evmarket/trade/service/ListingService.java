@@ -21,6 +21,6 @@ public interface ListingService {
     List<ListingResponse> getAllListings(); // Admin method - get all listings regardless of status
     List<ListingResponse> getListingsByItemType(String itemType);
     ListingResponse getListingById(Long listingId);
-    Listing updateListingStatus(Long listingId, String status);
+    ListingResponse updateListingStatus(Long listingId, String status);
     
 }

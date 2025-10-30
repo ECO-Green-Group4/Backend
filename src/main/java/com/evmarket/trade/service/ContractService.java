@@ -5,6 +5,7 @@ import com.evmarket.trade.entity.User;
 import com.evmarket.trade.request.ContractSignRequest;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.response.ContractResponse;
+import com.evmarket.trade.response.ContractDetailsResponse;
 
 import java.util.List;
 
@@ -21,4 +22,6 @@ public interface ContractService {
     // Contract management
     BaseResponse<List<ContractResponse>> getMyContracts(User user);
     BaseResponse<Void> cancelContract(Long contractId, User user);
+    BaseResponse<List<ContractDetailsResponse>> getMyContractDetails(User user);
+    BaseResponse<ContractDetailsResponse> getContractDetailsById(Long contractId, User user);
 }
