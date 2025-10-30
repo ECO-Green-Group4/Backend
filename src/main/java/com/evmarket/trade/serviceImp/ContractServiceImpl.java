@@ -105,9 +105,17 @@ public class ContractServiceImpl implements ContractService {
             Order order = contract.getOrder();
             boolean isBuyer = user.getUserId() == order.getBuyer().getUserId();
             boolean isSeller = user.getUserId() == order.getSeller().getUserId();
-            
+
             if (!isBuyer && !isSeller) {
                 throw new RuntimeException("User is not authorized to sign this contract");
+            }
+
+            // Disallow signing if contract is already fully signed or cancelled
+            if ("SIGNED".equals(contract.getContractStatus())) {
+                throw new RuntimeException("Contract has already been fully signed");
+            }
+            if ("CANCELLED".equals(contract.getContractStatus())) {
+                throw new RuntimeException("Cannot sign a cancelled contract");
             }
             
             // Update contract status and signature flags
