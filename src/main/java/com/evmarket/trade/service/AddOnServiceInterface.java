@@ -1,0 +1,24 @@
+package com.evmarket.trade.service;
+
+import com.evmarket.trade.entity.AddOnService;
+import com.evmarket.trade.entity.User;
+import com.evmarket.trade.request.ContractAddOnRequest;
+import com.evmarket.trade.request.ContractAddOnsRequest;
+import com.evmarket.trade.response.ContractAddOnResponse;
+import com.evmarket.trade.response.PaymentResponse;
+import com.evmarket.trade.response.common.BaseResponse;
+
+import java.util.List;
+
+public interface AddOnServiceInterface {
+    // AddOn service management
+    BaseResponse<List<AddOnService>> getAvailableAddOnServices();
+
+    // Contract AddOn management
+    BaseResponse<ContractAddOnResponse> createContractAddOn(ContractAddOnRequest request, User user);
+    BaseResponse<List<ContractAddOnResponse>> createContractAddOns(ContractAddOnsRequest request, User user);
+    BaseResponse<List<ContractAddOnResponse>> getContractAddOns(Long contractId, User user);
+    BaseResponse<ContractAddOnResponse> getContractAddOnById(Long contractAddOnId, User user);
+    BaseResponse<Void> deleteContractAddOn(Long contractAddOnId, User user);
+
+}
