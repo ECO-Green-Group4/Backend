@@ -14,6 +14,7 @@ import com.evmarket.trade.response.ContractResponse;
 import com.evmarket.trade.response.ContractDetailsResponse;
 import com.evmarket.trade.response.ContractAddOnResponse;
 import com.evmarket.trade.service.ContractService;
+import com.evmarket.trade.service.EmailService;
 import com.evmarket.trade.util.OTPUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,9 @@ public class ContractServiceImpl implements ContractService {
     
     @Autowired
     private ContractAddOnRepository contractAddOnRepository;
+    
+    @Autowired
+    private EmailService emailService;
     
     private final Map<Long, String> otpStorage = new HashMap<>();
 
@@ -176,7 +180,12 @@ public class ContractServiceImpl implements ContractService {
             }
             
             String otp = generateOTP(contractId);
-            return BaseResponse.success(otp, "OTP sent successfully");
+            // Send OTP to the authenticated user's email
+            if (user.getEmail() == null || user.getEmail().isEmpty()) {
+                throw new RuntimeException("User does not have an email to receive OTP");
+            }
+            emailService.sendContractOtpEmail(user.getEmail(), otp);
+            return BaseResponse.success("OK", "OTP has been sent to your email");
             
         } catch (Exception e) {
             return BaseResponse.error("Failed to send OTP: " + e.getMessage());

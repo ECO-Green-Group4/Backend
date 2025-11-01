@@ -32,5 +32,26 @@ public class EmailServiceImpl implements EmailService {
             throw new RuntimeException("Unable to send email: " + e.getMessage());
         }
     }
+
+    @Override
+    public void sendContractOtpEmail(String toEmail, String otp) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject("Contract Signing OTP - EV Trade");
+            message.setText(
+                "Xin chào,\n\n" +
+                "Bạn đang yêu cầu ký hợp đồng trên hệ thống EV Trade.\n\n" +
+                "Mã OTP xác nhận ký hợp đồng của bạn là: " + otp + "\n\n" +
+                "Mã có hiệu lực trong 5 phút.\n\n" +
+                "Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.\n\n" +
+                "Trân trọng,\n" +
+                "EV Trade Team"
+            );
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to send email: " + e.getMessage());
+        }
+    }
 }
 
