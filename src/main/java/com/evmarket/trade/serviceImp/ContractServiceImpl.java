@@ -353,6 +353,7 @@ public class ContractServiceImpl implements ContractService {
         r.setFee(entity.getFee());
         r.setCreatedAt(entity.getCreatedAt());
         r.setPaymentStatus(entity.getPaymentStatus());
+        r.setChargedTo(entity.getChargedTo());
         return r;
     }
 }
