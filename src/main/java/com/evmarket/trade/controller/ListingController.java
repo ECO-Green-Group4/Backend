@@ -67,12 +67,12 @@ public class ListingController {
         );
     }
 
-    // Lấy toàn bộ battery listings
+    // Lấy toàn bộ battery listings (với số điện thoại của người đăng)
     @GetMapping("/listings/battery")
     public ResponseEntity<BaseResponse<List<ListingResponse>>> getAllBatteryListings(Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(
-                BaseResponse.success(listingService.getListingsByItemType("BATTERY"), "Battery listings retrieved successfully")
+                BaseResponse.success(listingService.getBatteryListingsWithPhone(), "Battery listings retrieved successfully")
         );
     }
     

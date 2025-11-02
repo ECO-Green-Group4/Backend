@@ -55,8 +55,8 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(readOnly = true)
     public BaseResponse<List<ListingResponse>> getAllListings(User admin) {
         try {
-            // Admin cần thấy TẤT CẢ listings, không chỉ ACTIVE
-            List<ListingResponse> responses = listingService.getAllListings();
+            // Admin cần thấy TẤT CẢ listings với số điện thoại của người đăng
+            List<ListingResponse> responses = listingService.getAllListingsWithPhone();
 
             logAdminAction(admin, "LISTING", null, "VIEW_ALL_LISTINGS");
             return BaseResponse.success(responses, "Tất cả listings được lấy thành công");

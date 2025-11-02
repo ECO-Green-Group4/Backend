@@ -238,6 +238,15 @@ public class ListingServiceImpl implements ListingService {
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<ListingResponse> getAllListingsWithPhone() {
+        List<Listing> listings = listingRepository.findAll();
+        return listings.stream()
+                .map(listing -> convertToResponse(listing, true)) // includePhone = true
+                .collect(Collectors.toList());
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -245,6 +254,18 @@ public class ListingServiceImpl implements ListingService {
         List<Listing> listings = listingRepository.findActiveByItemType(itemType);
         return listings.stream()
                 .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get battery listings with phone number included (for seller endpoint)
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ListingResponse> getBatteryListingsWithPhone() {
+        List<Listing> listings = listingRepository.findActiveByItemType("battery");
+        return listings.stream()
+                .map(listing -> convertToResponse(listing, true)) // includePhone = true
                 .collect(Collectors.toList());
     }
 
@@ -267,9 +288,18 @@ public class ListingServiceImpl implements ListingService {
     
 
     private ListingResponse convertToResponse(Listing listing) {
+        return convertToResponse(listing, false);
+    }
+    
+    private ListingResponse convertToResponse(Listing listing, boolean includePhone) {
         ListingResponse response = new ListingResponse();
         response.setListingId(listing.getListingId());
-        response.setUser(convertUserToUserInfoResponse(listing.getUser()));
+        // For battery listings in seller endpoint, include phone number
+        if (includePhone) {
+            response.setUser(convertUserToUserInfoResponseWithPhone(listing.getUser()));
+        } else {
+            response.setUser(convertUserToUserInfoResponse(listing.getUser()));
+        }
         response.setItemType(listing.getItemType());
         response.setTitle(listing.getTitle());
         response.setDescription(listing.getDescription());
@@ -327,6 +357,24 @@ public class ListingServiceImpl implements ListingService {
                 .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
                 .gender(user.getGender())
                 // Do NOT expose sensitive fields like identity card, password, address
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+    
+    private UserInfoResponse convertUserToUserInfoResponseWithPhone(User user) {
+        if (user == null) {
+            return null;
+        }
+        
+        return UserInfoResponse.builder()
+                .userId((long) user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .phone(user.getPhone()) // Include phone for battery listings
+                .status(user.getStatus())
+                .dateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null)
+                .gender(user.getGender())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

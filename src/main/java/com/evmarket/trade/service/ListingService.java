@@ -19,7 +19,9 @@ public interface ListingService {
     List<ListingResponse> getListingsByUser(User user);
     List<ListingResponse> getAllAvailableListings();
     List<ListingResponse> getAllListings(); // Admin method - get all listings regardless of status
+    List<ListingResponse> getAllListingsWithPhone(); // Get all listings with phone number (for admin)
     List<ListingResponse> getListingsByItemType(String itemType);
+    List<ListingResponse> getBatteryListingsWithPhone(); // Get battery listings with phone number
     ListingResponse getListingById(Long listingId);
     ListingResponse updateListingStatus(Long listingId, String status);
     
