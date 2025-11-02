@@ -1,6 +1,7 @@
 package com.evmarket.trade.controller;
 
 import com.evmarket.trade.entity.User;
+import com.evmarket.trade.response.ListingResponse;
 import com.evmarket.trade.response.OrderResponse;
 import com.evmarket.trade.response.common.BaseResponse;
 import com.evmarket.trade.service.AuthService;
@@ -32,6 +33,18 @@ public class StaffController {
     public ResponseEntity<BaseResponse<List<OrderResponse>>> getAssignedOrders(Authentication authentication) {
         User staff = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(staffService.getAssignedOrders(staff));
+    }
+    
+    /**
+     * Xem thông tin bài đăng (listing) của order mà staff được gán
+     */
+    @GetMapping("/orders/{orderId}/listing")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<BaseResponse<ListingResponse>> getOrderListing(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        User staff = authService.getCurrentUser(authentication);
+        return ResponseEntity.ok(staffService.getOrderListing(orderId, staff));
     }
     
 }

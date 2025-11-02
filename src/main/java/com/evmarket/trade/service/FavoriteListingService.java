@@ -18,3 +18,4 @@ public interface FavoriteListingService {
     BaseResponse<Boolean> checkFavorite(Long listingId, User user);
 }
 
+

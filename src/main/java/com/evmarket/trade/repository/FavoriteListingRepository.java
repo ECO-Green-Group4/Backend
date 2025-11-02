@@ -26,3 +26,4 @@ public interface FavoriteListingRepository extends JpaRepository<FavoriteListing
     void deleteByUserAndListing(User user, Listing listing);
 }
 
+

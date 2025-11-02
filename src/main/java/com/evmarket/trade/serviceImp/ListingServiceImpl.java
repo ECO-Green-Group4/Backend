@@ -238,6 +238,15 @@ public class ListingServiceImpl implements ListingService {
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<ListingResponse> getAllListingsWithPhone() {
+        List<Listing> listings = listingRepository.findAll();
+        return listings.stream()
+                .map(listing -> convertToResponse(listing, true)) // includePhone = true
+                .collect(Collectors.toList());
+    }
 
     @Override
     @Transactional(readOnly = true)
