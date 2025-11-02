@@ -1,6 +1,7 @@
 package com.evmarket.trade.request;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 
@@ -14,6 +15,8 @@ public class ContractAddOnRequest {
     private Long serviceId;
     
     // Fee will be taken from AddOnService.defaultFee
+    @Pattern(regexp = "^(BUYER|SELLER)$", message = "chargedTo must be BUYER or SELLER")
+    private String chargedTo;
 }
 
 

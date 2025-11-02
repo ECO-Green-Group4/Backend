@@ -93,6 +93,9 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
             contractAddOn.setFee(service.getDefaultFee());
             contractAddOn.setCreatedAt(LocalDateTime.now());
             contractAddOn.setPaymentStatus("PENDING"); // Trạng thái thanh toán mặc định
+            // Assign who is charged (default BUYER if not provided)
+            String chargedTo = request.getChargedTo() != null ? request.getChargedTo() : "BUYER";
+            contractAddOn.setChargedTo(chargedTo);
 
             ContractAddOn saved = contractAddOnRepository.save(contractAddOn);
             
@@ -151,6 +154,8 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
                 contractAddOn.setFee(service.getDefaultFee());
                 contractAddOn.setCreatedAt(LocalDateTime.now());
                 contractAddOn.setPaymentStatus("PENDING");
+                String chargedTo = request.getChargedTo() != null ? request.getChargedTo() : "BUYER";
+                contractAddOn.setChargedTo(chargedTo);
 
                 ContractAddOn saved = contractAddOnRepository.save(contractAddOn);
                 updateContractAddonIds(contract, saved.getId());
@@ -243,6 +248,7 @@ public class AddOnServiceImpl implements AddOnServiceInterface {
         r.setFee(entity.getFee());
         r.setCreatedAt(entity.getCreatedAt());
         r.setPaymentStatus(entity.getPaymentStatus());
+        r.setChargedTo(entity.getChargedTo());
         return r;
     }
 

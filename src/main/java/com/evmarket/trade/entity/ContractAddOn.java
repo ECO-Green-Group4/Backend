@@ -30,6 +30,9 @@ public class ContractAddOn {
     @Column(name = "payment_status", columnDefinition = "nvarchar(50)")
     private String paymentStatus; // PENDING, PAID, FAILED
 
+    @Column(name = "charged_to", length = 20)
+    private String chargedTo; // BUYER or SELLER
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Contract getContract() { return contract; }
@@ -42,4 +45,6 @@ public class ContractAddOn {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public String getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+    public String getChargedTo() { return chargedTo; }
+    public void setChargedTo(String chargedTo) { this.chargedTo = chargedTo; }
 }

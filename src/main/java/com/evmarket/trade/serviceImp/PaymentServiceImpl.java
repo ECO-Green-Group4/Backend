@@ -191,8 +191,13 @@ public class PaymentServiceImpl implements PaymentService {
                     .orElseThrow(() -> new AppException("Contract add-on not found"));
 
             Contract contract = contractAddOn.getContract();
-            boolean isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId()
-                    || contract.getOrder().getSeller().getUserId() == payer.getUserId();
+            // Restrict who can pay based on chargedTo
+            boolean isAuthorized;
+            if ("SELLER".equalsIgnoreCase(contractAddOn.getChargedTo())) {
+                isAuthorized = contract.getOrder().getSeller().getUserId() == payer.getUserId();
+            } else { // default BUYER
+                isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId();
+            }
 
             if (!isAuthorized) {
                 throw new AppException("You are not authorized to pay for this service");
@@ -370,8 +375,12 @@ public class PaymentServiceImpl implements PaymentService {
                     .orElseThrow(() -> new AppException("Contract add-on not found"));
 
             Contract contract = contractAddOn.getContract();
-            boolean isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId()
-                    || contract.getOrder().getSeller().getUserId() == payer.getUserId();
+            boolean isAuthorized;
+            if ("SELLER".equalsIgnoreCase(contractAddOn.getChargedTo())) {
+                isAuthorized = contract.getOrder().getSeller().getUserId() == payer.getUserId();
+            } else { // default BUYER
+                isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId();
+            }
 
             if (!isAuthorized) {
                 throw new AppException("You are not authorized to pay for this service");
@@ -681,10 +690,16 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new AppException("You are not authorized to pay for this contract");
             }
 
-            // Get all pending addons for this contract
+            // Get all pending addons for this contract that the current user is responsible for
             List<ContractAddOn> contractAddOns = contractAddOnRepository.findByContract(contract);
             List<ContractAddOn> pendingAddOns = contractAddOns.stream()
                     .filter(addon -> "PENDING".equals(addon.getPaymentStatus()))
+                    .filter(addon -> {
+                        if ("SELLER".equalsIgnoreCase(addon.getChargedTo())) {
+                            return contract.getOrder().getSeller().getUserId() == payer.getUserId();
+                        }
+                        return contract.getOrder().getBuyer().getUserId() == payer.getUserId();
+                    })
                     .collect(Collectors.toList());
 
             if (pendingAddOns.isEmpty()) {

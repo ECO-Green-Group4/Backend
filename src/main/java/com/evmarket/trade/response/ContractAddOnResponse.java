@@ -11,6 +11,7 @@ public class ContractAddOnResponse {
     private BigDecimal fee;
     private LocalDateTime createdAt;
     private String paymentStatus;
+    private String chargedTo;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -26,6 +27,8 @@ public class ContractAddOnResponse {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public String getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+    public String getChargedTo() { return chargedTo; }
+    public void setChargedTo(String chargedTo) { this.chargedTo = chargedTo; }
 }
 
 

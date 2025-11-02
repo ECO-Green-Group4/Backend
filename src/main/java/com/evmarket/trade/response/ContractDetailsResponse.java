@@ -15,6 +15,8 @@ import java.util.List;
 public class ContractDetailsResponse {
     private Long contractId;
     private Long orderId;
+    private Long buyerId;
+    private Long sellerId;
     private String status;
     private Boolean sellerSigned;
     private Boolean buyerSigned;
