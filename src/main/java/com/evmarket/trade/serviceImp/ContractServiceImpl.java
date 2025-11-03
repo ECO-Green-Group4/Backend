@@ -143,17 +143,14 @@ public class ContractServiceImpl implements ContractService {
                 if (Boolean.TRUE.equals(contract.getSignedByBuyer()) && Boolean.TRUE.equals(contract.getSignedBySeller())) {
                     contract.setContractStatus("SIGNED");
                     
-                    // When contract is fully signed, mark order as COMPLETED and take down the listing
+                    // When contract is fully signed, take down the listing
+                    // Order status will remain PENDING until staff confirms completion
                     Listing listing = order.getListing();
                     if (listing != null) {
                         listing.setStatus("SOLD");
                         listing.setUpdatedAt(java.time.LocalDateTime.now());
                         listingRepository.save(listing);
                     }
-                    
-                    // Update order status
-                    order.setStatus("COMPLETED");
-                    orderRepository.save(order);
                 }
             }
             
@@ -319,15 +316,22 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public BaseResponse<ContractResponse> completeContract(Long contractId, User user) {
+    public BaseResponse<ContractResponse> completeContract(Long orderId, User user) {
         try {
             // Only staff/admin can complete a contract
             if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
                 throw new RuntimeException("Only staff can complete contracts");
             }
 
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
+            // Find order by orderId
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+            // Find contract by order
+            Contract contract = contractRepository.findByOrder(order);
+            if (contract == null) {
+                throw new RuntimeException("Contract not found for order id: " + orderId);
+            }
 
             // Contract must be fully signed before completion
             if (!"SIGNED".equals(contract.getContractStatus())) {
@@ -338,6 +342,10 @@ public class ContractServiceImpl implements ContractService {
             contract.setContractStatus("COMPLETED");
             contract.setSignedAt(LocalDateTime.now());
             Contract saved = contractRepository.save(contract);
+
+            // Update order status to COMPLETED when staff confirms contract completion
+            order.setStatus("COMPLETED");
+            orderRepository.save(order);
 
             return BaseResponse.success(convertToResponse(saved), "Contract completed successfully");
         } catch (Exception e) {

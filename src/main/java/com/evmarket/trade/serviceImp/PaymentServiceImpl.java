@@ -609,26 +609,35 @@ public class PaymentServiceImpl implements PaymentService {
             log.info("Add-on service {} has been paid successfully",
                     contractAddOn.getService().getName());
         } else if (payment.getContractId() != null) {
-            // Contract addons payment - update all pending addons
+            // Contract addons payment - update only pending addons charged to the payer's side
             Contract contract = contractRepository.findById(payment.getContractId())
                     .orElseThrow(() -> new AppException("Contract not found"));
 
+            // Determine which side the payer belongs to
+            String payerSide;
+            if (contract.getOrder() != null && contract.getOrder().getSeller() != null
+                    && contract.getOrder().getSeller().getUserId() == payment.getPayer().getUserId()) {
+                payerSide = "SELLER";
+            } else if (contract.getOrder() != null && contract.getOrder().getBuyer() != null
+                    && contract.getOrder().getBuyer().getUserId() == payment.getPayer().getUserId()) {
+                payerSide = "BUYER";
+            } else {
+                throw new AppException("Payer is not associated with this contract");
+            }
+
             List<ContractAddOn> contractAddOns = contractAddOnRepository.findByContract(contract);
-            List<ContractAddOn> pendingAddOns = contractAddOns.stream()
+            List<ContractAddOn> pendingAddOnsForPayer = contractAddOns.stream()
                     .filter(addon -> "PENDING".equals(addon.getPaymentStatus()))
+                    .filter(addon -> payerSide.equalsIgnoreCase(addon.getChargedTo()))
                     .collect(Collectors.toList());
 
-            // Update all pending addons to PAID
-            for (ContractAddOn addon : pendingAddOns) {
+            for (ContractAddOn addon : pendingAddOnsForPayer) {
                 addon.setPaymentStatus("PAID");
                 contractAddOnRepository.save(addon);
             }
 
-            log.info("Contract addons payment completed: contractId={}, amount={}, paidAddons={}",
-                    contract.getContractId(), payment.getAmount(), pendingAddOns.size());
-
-            log.info("All pending addon services for contract {} have been paid successfully",
-                    contract.getContractId());
+            log.info("Contract addons payment completed: contractId={}, payerSide={}, amount={}, paidAddons={}",
+                    contract.getContractId(), payerSide, payment.getAmount(), pendingAddOnsForPayer.size());
         }
     }
 

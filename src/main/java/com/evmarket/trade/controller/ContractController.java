@@ -83,14 +83,14 @@ public class ContractController {
     }
 
     // Staff completes a signed contract
-    @PutMapping("/{contractId}/complete")
-    public ResponseEntity<BaseResponse<?>> completeContract(@PathVariable Long contractId, Authentication authentication) {
+    @PutMapping("/order/{orderId}/complete")
+    public ResponseEntity<BaseResponse<?>> completeContract(@PathVariable Long orderId, Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         // Additional check to ensure only staff/admin can access
         if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
             return ResponseEntity.status(403).body(BaseResponse.error("Access denied. Only staff can complete contracts."));
         }
-        return ResponseEntity.ok(contractService.completeContract(contractId, user));
+        return ResponseEntity.ok(contractService.completeContract(orderId, user));
     }
 }
 
