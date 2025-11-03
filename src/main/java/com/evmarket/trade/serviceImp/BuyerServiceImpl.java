@@ -153,7 +153,7 @@ public class BuyerServiceImpl implements BuyerService {
             order.setSeller(listing.getUser());
             order.setListing(listing);
             order.setOrderDate(LocalDateTime.now());
-            order.setStatus("SUCCESS");
+            order.setStatus("PENDING");
             order.setBasePrice(basePrice);
             order.setCommissionFee(commissionFee);
             order.setTotalAmount(totalAmount);
