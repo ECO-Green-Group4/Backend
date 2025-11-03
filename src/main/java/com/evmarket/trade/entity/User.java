@@ -58,6 +58,12 @@ public class User {
     @Column(name = "available_coupons")
     private Integer availableCoupons;
 
+    @Column(name = "provider", length = 50)
+    private String provider;
+
+    @Column(name = "provider_id", length = 255)
+    private String providerId;
+
     public int getUserId() {
         return userId;
     }
@@ -170,4 +176,10 @@ public class User {
 
     public Integer getAvailableCoupons() { return availableCoupons; }
     public void setAvailableCoupons(Integer availableCoupons) { this.availableCoupons = availableCoupons; }
+
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+
+    public String getProviderId() { return providerId; }
+    public void setProviderId(String providerId) { this.providerId = providerId; }
 }

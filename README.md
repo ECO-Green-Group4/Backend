@@ -1,5 +1,14 @@
 # EV Trade - Hệ thống giao dịch xe điện
 
+## 🔒 SECURITY NOTICE
+**⚠️ Google Login đã được update để bảo mật!**  
+- **Frontend:** Authenticate với Google → Lấy ID Token → Gửi lên backend  
+- **Backend:** Verify ID Token với Google servers → Tạo JWT  
+📖 Complete Flow: [HOW_GOOGLE_LOGIN_WORKS.md](HOW_GOOGLE_LOGIN_WORKS.md)  
+🔐 Migration Guide: [GOOGLE_LOGIN_SECURITY_UPDATE.md](GOOGLE_LOGIN_SECURITY_UPDATE.md)  
+📋 Summary: [SECURITY_FIX_SUMMARY.md](SECURITY_FIX_SUMMARY.md)  
+🧪 **Test ngay:** Mở `test_google_login.html` hoặc xem [QUICK_TEST.md](QUICK_TEST.md)
+
 ## Tổng quan
 EV Trade là một nền tảng giao dịch xe điện và pin xe điện, cho phép người dùng đăng bán, mua sắm và quản lý các giao dịch một cách an toàn và minh bạch.
 
@@ -325,6 +334,7 @@ curl -X POST "http://localhost:8080/api/admin/service-packages" \
 ### Authentication APIs
 - `POST /api/auth/register` - Đăng ký tài khoản
 - `POST /api/auth/login` - Đăng nhập
+- `POST /api/auth/login/google` - Đăng nhập bằng Google
 
 ### Listing APIs
 - `POST /api/listing/vehicle` - Đăng bán xe điện
@@ -356,6 +366,50 @@ curl -X POST "http://localhost:8080/api/admin/service-packages" \
 - `GET /api/contract/my-contracts` - Xem hợp đồng của tôi
 
 
+
+## 🔐 Đăng nhập Google OAuth2
+
+### Setup Google OAuth2 Credentials
+
+👉 **Xem hướng dẫn chi tiết**: [HOW_TO_GET_GOOGLE_CREDENTIALS.md](HOW_TO_GET_GOOGLE_CREDENTIALS.md)
+
+**Quick setup** (5 phút):
+1. Vào https://console.cloud.google.com/
+2. Tạo project mới
+3. ~~Enable Google+ API~~ (Không cần - đã deprecated)
+4. Configure OAuth consent screen
+5. Tạo OAuth 2.0 Client ID (Web application)
+6. Copy Client ID và Secret
+7. Update `application.properties`:
+   ```properties
+   spring.security.oauth2.client.registration.google.client-id=YOUR_CLIENT_ID
+   spring.security.oauth2.client.registration.google.client-secret=YOUR_CLIENT_SECRET
+   ```
+
+### Đăng nhập Google
+
+**Endpoint:** `POST /api/auth/login/google`
+
+**Request:**
+```json
+{
+  "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Login with Google successful",
+  "role": "member",
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "id": 1,
+  "fullName": "Nguyen Van A"
+}
+```
+
+**🔒 Security:** Backend verify Google ID Token với Google servers. Không thể fake login!
+**📖 Migration Guide:** Xem [GOOGLE_LOGIN_SECURITY_UPDATE.md](GOOGLE_LOGIN_SECURITY_UPDATE.md) để update frontend code.
 
 ## Cài đặt và chạy
 
