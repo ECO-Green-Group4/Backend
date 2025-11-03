@@ -8,6 +8,8 @@ import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.request.ForgotPasswordRequest;
 import com.evmarket.trade.request.ResetPasswordRequest;
 import com.evmarket.trade.request.ChangePasswordRequest;
+import com.evmarket.trade.request.GoogleLoginRequest;
+import com.evmarket.trade.request.UpdateProfileRequest;
 import com.evmarket.trade.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -98,6 +100,31 @@ public class AuthController {
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
         return authService.changePassword(request, authentication);
+    }
+
+    @Operation(summary = "Login with Google", description = "Authenticate using Google OAuth2 and return JWT token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Login successful"),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class)))
+    })
+    @PostMapping("/login/google")
+    public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        System.out.println("Google Login Request received: " + request);
+        return authService.loginWithGoogle(request);
+    }
+    
+    @Operation(summary = "Update profile", description = "Complete user profile with additional information (for Google users)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = BaseResponse.class)))
+    })
+    @PostMapping("/update-profile")
+    public ResponseEntity<String> updateProfile(@Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
+        return authService.updateProfile(request, authentication);
     }
 }
 

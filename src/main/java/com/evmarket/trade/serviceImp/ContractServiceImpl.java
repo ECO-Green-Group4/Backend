@@ -318,6 +318,33 @@ public class ContractServiceImpl implements ContractService {
         }
     }
 
+    @Override
+    public BaseResponse<ContractResponse> completeContract(Long contractId, User user) {
+        try {
+            // Only staff/admin can complete a contract
+            if (!"STAFF".equals(user.getRole()) && !"ADMIN".equals(user.getRole())) {
+                throw new RuntimeException("Only staff can complete contracts");
+            }
+
+            Contract contract = contractRepository.findById(contractId)
+                    .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
+
+            // Contract must be fully signed before completion
+            if (!"SIGNED".equals(contract.getContractStatus())) {
+                throw new RuntimeException("Contract is not in SIGNED status");
+            }
+
+            // Mark contract as COMPLETED
+            contract.setContractStatus("COMPLETED");
+            contract.setSignedAt(LocalDateTime.now());
+            Contract saved = contractRepository.save(contract);
+
+            return BaseResponse.success(convertToResponse(saved), "Contract completed successfully");
+        } catch (Exception e) {
+            return BaseResponse.error("Failed to complete contract: " + e.getMessage());
+        }
+    }
+
     // Helper methods
     private String generateOTP(Long contractId) {
         String otp = OTPUtil.generateOTP();

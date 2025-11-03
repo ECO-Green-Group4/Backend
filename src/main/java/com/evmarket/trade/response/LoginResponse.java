@@ -17,4 +17,5 @@ public class LoginResponse {
     private Integer id;
     private String sex;
     private String fullName;
+    private Boolean profileComplete; // NEW: Indicates if user profile is complete
 }

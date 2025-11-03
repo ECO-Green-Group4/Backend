@@ -8,6 +8,8 @@ import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.request.ResetPasswordRequest;
 import com.evmarket.trade.request.ChangePasswordRequest;
+import com.evmarket.trade.request.GoogleLoginRequest;
+import com.evmarket.trade.request.UpdateProfileRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
@@ -23,6 +25,12 @@ public interface AuthService {
     
     // Change password method
     ResponseEntity<String> changePassword(ChangePasswordRequest request, Authentication authentication);
+    
+    // Google OAuth2 login method
+    ResponseEntity<LoginResponse> loginWithGoogle(GoogleLoginRequest request);
+    
+    // Update profile method (for completing Google user profile)
+    ResponseEntity<String> updateProfile(UpdateProfileRequest request, Authentication authentication);
 }
 
 

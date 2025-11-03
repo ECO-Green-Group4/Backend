@@ -51,11 +51,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // 👈 frontend của bạn
+        // Allow all origins for development (file:// protocol support)
+        config.setAllowedOriginPatterns(List.of("*")); // 👈 cho phép tất cả origins
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setExposedHeaders(List.of("Authorization", "Content-Type")); // 👈 optional
-        config.setAllowCredentials(true); // 👈 nếu bạn dùng cookie/token cần cái này
+        config.setAllowCredentials(false); // 👈 must be false when using wildcard origins
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
