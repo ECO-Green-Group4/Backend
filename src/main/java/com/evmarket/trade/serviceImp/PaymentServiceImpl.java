@@ -50,69 +50,6 @@ public class PaymentServiceImpl implements PaymentService {
     private VNPayService vnPayService;
 
     @Override
-    public BaseResponse<PaymentResponse> payListingPackage(Long listingPackageId, User payer) {
-        try {
-            log.info("Starting payment for listing package: listingPackageId={}, user={}", listingPackageId, payer.getUserId());
-
-            ListingPackage listingPackage = listingPackageRepository.findById(listingPackageId)
-                    .orElseThrow(() -> new AppException("Listing package not found"));
-
-            if (listingPackage.getListing().getUser().getUserId() != payer.getUserId()) {
-                throw new AppException("You are not authorized to pay for this package");
-            }
-
-            if (!"PENDING_PAYMENT".equals(listingPackage.getStatus())) {
-                throw new AppException("Listing package is not in pending payment status");
-            }
-
-            // Calculate amount: listing fee * quantity
-            BigDecimal amount = listingPackage.getServicePackage().getListingFee()
-                    .multiply(BigDecimal.valueOf(listingPackage.getQuantity()));
-
-            // Create payment record
-            Payment payment = createPayment(Payment.PaymentType.PACKAGE, amount, payer);
-            payment.setListingPackageId(listingPackageId);
-            payment = paymentRepository.save(payment);
-
-            PaymentResponse response = toPaymentResponse(payment);
-
-            return BaseResponse.success(response, "Payment created. Use Stripe endpoints for payment processing.");
-
-        } catch (Exception e) {
-            log.error("Error processing listing package payment: ", e);
-            throw new AppException("Error processing payment: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public BaseResponse<PaymentResponse> payMembership(Long servicePackageId, User payer) {
-        try {
-            log.info("Starting membership payment: servicePackageId={}, user={}", servicePackageId, payer.getUserId());
-
-            ServicePackage servicePackage = servicePackageRepository.findById(servicePackageId)
-                    .orElseThrow(() -> new AppException("Service package not found"));
-
-            if (servicePackage.getPackageType() != ServicePackage.PackageType.MEMBERSHIP) {
-                throw new AppException("This is not a membership package");
-            }
-
-            BigDecimal amount = servicePackage.getListingFee();
-
-            // Create payment record
-            Payment payment = createPayment(Payment.PaymentType.MEMBERSHIP, amount, payer);
-            payment = paymentRepository.save(payment);
-
-            PaymentResponse response = toPaymentResponse(payment);
-
-            return BaseResponse.success(response, "Payment created. Use Stripe endpoints for payment processing.");
-
-        } catch (Exception e) {
-            log.error("Error processing membership payment: ", e);
-            throw new AppException("Error processing payment: " + e.getMessage());
-        }
-    }
-
-    @Override
     public BaseResponse<PaymentResponse> payMembershipWithVNPay(Long servicePackageId, User payer, String ipAddress) {
         try {
             log.info("Starting membership payment with VNPay: servicePackageId={}, user={}", servicePackageId, payer.getUserId());
@@ -179,44 +116,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             log.error("Error creating membership payment with VNPay: ", e);
             throw new AppException("Error creating membership payment: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public BaseResponse<PaymentResponse> payContractAddOn(Long contractAddOnId, User payer) {
-        try {
-            log.info("Starting contract add-on payment: contractAddOnId={}, user={}", contractAddOnId, payer.getUserId());
-
-            ContractAddOn contractAddOn = contractAddOnRepository.findById(contractAddOnId)
-                    .orElseThrow(() -> new AppException("Contract add-on not found"));
-
-            Contract contract = contractAddOn.getContract();
-            // Restrict who can pay based on chargedTo
-            boolean isAuthorized;
-            if ("SELLER".equalsIgnoreCase(contractAddOn.getChargedTo())) {
-                isAuthorized = contract.getOrder().getSeller().getUserId() == payer.getUserId();
-            } else { // default BUYER
-                isAuthorized = contract.getOrder().getBuyer().getUserId() == payer.getUserId();
-            }
-
-            if (!isAuthorized) {
-                throw new AppException("You are not authorized to pay for this service");
-            }
-
-            BigDecimal amount = contractAddOn.getFee();
-
-            // Create payment record
-            Payment payment = createPayment(Payment.PaymentType.ADDON, amount, payer);
-            payment.setContractAddOnId(contractAddOnId);
-            payment = paymentRepository.save(payment);
-
-            PaymentResponse response = toPaymentResponse(payment);
-
-            return BaseResponse.success(response, "Contract add-on payment created. Use Stripe endpoints for payment processing.");
-
-        } catch (Exception e) {
-            log.error("Error processing contract add-on payment: ", e);
-            throw new AppException("Error processing payment: " + e.getMessage());
         }
     }
 
@@ -639,19 +538,6 @@ public class PaymentServiceImpl implements PaymentService {
             log.info("Contract addons payment completed: contractId={}, payerSide={}, amount={}, paidAddons={}",
                     contract.getContractId(), payerSide, payment.getAmount(), pendingAddOnsForPayer.size());
         }
-    }
-
-    // Helper methods
-    private Payment createPayment(Payment.PaymentType paymentType, BigDecimal amount, User payer) {
-        Payment payment = new Payment();
-        payment.setPaymentType(paymentType);
-        payment.setPayer(payer);
-        payment.setAmount(amount);
-        payment.setCurrency("VND");
-        payment.setPaymentStatus("PENDING");
-        payment.setCreatedAt(LocalDateTime.now());
-        payment.setExpiryTime(LocalDateTime.now().plusMinutes(30));
-        return payment;
     }
 
     private Payment createVNPayPayment(Payment.PaymentType paymentType, BigDecimal amount, User payer) {
