@@ -431,10 +431,6 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-### Deploy không dùng Docker (Railway)
-- Thêm hướng dẫn chi tiết: xem `DEPLOY_ON_RAILWAY.md`.
-- Ứng dụng đã sẵn sàng đọc `PORT` và các biến môi trường do Railway cung cấp.
-
 ### Cấu hình database
 Cập nhật file `src/main/resources/application.properties`:
 ```properties
