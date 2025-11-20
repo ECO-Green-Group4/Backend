@@ -24,4 +24,5 @@ public interface ContractService {
     BaseResponse<Void> cancelContract(Long contractId, User user);
     BaseResponse<List<ContractDetailsResponse>> getMyContractDetails(User user);
     BaseResponse<ContractDetailsResponse> getContractDetailsById(Long contractId, User user);
+    BaseResponse<ContractResponse> completeContract(Long orderId, User user);
 }

@@ -9,11 +9,8 @@ import com.evmarket.trade.response.common.BaseResponse;
 import java.util.List;
 
 public interface PaymentService {
-    BaseResponse<PaymentResponse> payListingPackage(Long listingPackageId, User payer);
     BaseResponse<PaymentResponse> payListingPackageWithVNPay(Long listingPackageId, User payer, String ipAddress);
-    BaseResponse<PaymentResponse> payMembership(Long servicePackageId, User payer);
     BaseResponse<PaymentResponse> payMembershipWithVNPay(Long servicePackageId, User payer, String ipAddress);
-    BaseResponse<PaymentResponse> payContractAddOn(Long contractAddOnId, User payer);
     BaseResponse<PaymentResponse> payContractAddOnWithVNPay(Long contractAddOnId, User payer, String ipAddress);
     BaseResponse<PaymentResponse> payContractAddonsWithVNPay(Long contractId, User payer, String ipAddress);
     BaseResponse<PaymentResponse> handleVNPayCallback(VNPayCallbackRequest request);

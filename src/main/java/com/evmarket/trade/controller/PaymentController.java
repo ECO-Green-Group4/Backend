@@ -33,17 +33,6 @@ public class PaymentController {
     @Autowired
     private VNPayService vnPayService;
 
-    @Autowired
-    private com.evmarket.trade.serviceImp.StripePaymentServiceImpl stripePaymentService;
-
-    @PostMapping("/package")
-    public ResponseEntity<BaseResponse<PaymentResponse>> payListingPackage(
-            @RequestParam @NotNull Long listingPackageId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(paymentService.payListingPackage(listingPackageId, user));
-    }
-
     @PostMapping("/package/vnpay")
     public ResponseEntity<BaseResponse<PaymentResponse>> payListingPackageWithVNPay(
             @RequestParam @NotNull Long listingPackageId,
@@ -53,16 +42,6 @@ public class PaymentController {
         String ipAddress = vnPayService.getIpAddress(request);
         return ResponseEntity.ok(paymentService.payListingPackageWithVNPay(listingPackageId, user, ipAddress));
     }
-
-
-    @PostMapping("/membership")
-    public ResponseEntity<BaseResponse<PaymentResponse>> payMembership(
-            @RequestParam @NotNull Long servicePackageId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(paymentService.payMembership(servicePackageId, user));
-    }
-
     @PostMapping("/membership/vnpay")
     public ResponseEntity<BaseResponse<PaymentResponse>> payMembershipWithVNPay(
             @RequestParam @NotNull Long servicePackageId,
@@ -71,14 +50,6 @@ public class PaymentController {
         User user = authService.getCurrentUser(authentication);
         String ipAddress = vnPayService.getIpAddress(request);
         return ResponseEntity.ok(paymentService.payMembershipWithVNPay(servicePackageId, user, ipAddress));
-    }
-
-    @PostMapping("/addon")
-    public ResponseEntity<BaseResponse<PaymentResponse>> payContractAddOn(
-            @RequestParam @NotNull Long contractAddOnId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(paymentService.payContractAddOn(contractAddOnId, user));
     }
 
     @PostMapping("/addon/vnpay")
@@ -163,33 +134,6 @@ public class PaymentController {
             Authentication authentication) {
         User user = authService.getCurrentUser(authentication);
         return ResponseEntity.ok(paymentService.getPaymentById(paymentId, user));
-    }
-
-
-    // ==================== Stripe Endpoints ====================
-
-    @PostMapping("/package/stripe")
-    public ResponseEntity<BaseResponse<com.evmarket.trade.response.StripeCheckoutResponse>> payListingPackageWithStripe(
-            @RequestParam @NotNull Long listingPackageId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(stripePaymentService.payListingPackageWithStripe(listingPackageId, user));
-    }
-
-    @PostMapping("/membership/stripe")
-    public ResponseEntity<BaseResponse<com.evmarket.trade.response.StripeCheckoutResponse>> payMembershipWithStripe(
-            @RequestParam @NotNull Long servicePackageId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(stripePaymentService.payMembershipWithStripe(servicePackageId, user));
-    }
-
-    @PostMapping("/addon/stripe")
-    public ResponseEntity<BaseResponse<com.evmarket.trade.response.StripeCheckoutResponse>> payContractAddOnWithStripe(
-            @RequestParam @NotNull Long contractAddOnId,
-            Authentication authentication) {
-        User user = authService.getCurrentUser(authentication);
-        return ResponseEntity.ok(stripePaymentService.payContractAddOnWithStripe(contractAddOnId, user));
     }
 
 }

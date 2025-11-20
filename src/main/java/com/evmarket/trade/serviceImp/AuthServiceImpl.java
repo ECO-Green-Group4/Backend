@@ -11,7 +11,10 @@ import com.evmarket.trade.request.LoginRequest;
 import com.evmarket.trade.request.RegisterRequest;
 import com.evmarket.trade.request.ResetPasswordRequest;
 import com.evmarket.trade.request.ChangePasswordRequest;
+import com.evmarket.trade.request.GoogleLoginRequest;
+import com.evmarket.trade.request.UpdateProfileRequest;
 import com.evmarket.trade.security.JwtService;
+import com.evmarket.trade.security.GoogleTokenVerifier;
 import com.evmarket.trade.service.AuthService;
 import com.evmarket.trade.service.EmailService;
 import com.evmarket.trade.util.OTPUtil;
@@ -28,6 +31,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -38,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final EmailService emailService;
+    private final GoogleTokenVerifier googleTokenVerifier;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     // Store OTP with email and expiration time (email -> {otp, expirationTime})
@@ -285,6 +290,145 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.error("Error changing password: ", e);
             return ResponseEntity.badRequest().body("Unable to change password: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public ResponseEntity<LoginResponse> loginWithGoogle(GoogleLoginRequest request) {
+        // Validate request - NEW: require idToken
+        if (!StringUtils.hasText(request.getIdToken())) {
+            throw new AppException(ErrorHandler.INVALID_INPUT);
+        }
+        
+        // SECURITY FIX: Verify Google ID Token with Google
+        Optional<GoogleTokenVerifier.GoogleUserInfo> googleUserInfo = 
+                googleTokenVerifier.verifyToken(request.getIdToken());
+        
+        if (googleUserInfo.isEmpty()) {
+            log.warn("Invalid or expired Google ID token");
+            throw new AppException(ErrorHandler.CREDENTIALS_INVALID);
+        }
+        
+        // Extract verified user info from Google
+        String email = googleUserInfo.get().getEmail().toLowerCase();
+        String providerId = googleUserInfo.get().getProviderId();
+        String fullName = googleUserInfo.get().getFullName();
+        String profilePicture = googleUserInfo.get().getProfilePicture();
+        
+        log.info("Google token verified successfully for user: {}", email);
+        
+        // Check if user exists by email
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        
+        User user;
+        if (existingUser.isPresent()) {
+            // User exists - update provider info if not set
+            user = existingUser.get();
+            if (user.getProvider() == null || user.getProviderId() == null) {
+                user.setProvider("GOOGLE");
+                user.setProviderId(providerId);
+                user = userRepository.save(user);
+            } else if (!"GOOGLE".equals(user.getProvider()) || !providerId.equals(user.getProviderId())) {
+                // Provider mismatch - user trying to login with different provider
+                log.warn("Provider mismatch for user: {} (expected: {}, got: {})", 
+                        email, user.getProvider(), providerId);
+                throw new AppException(ErrorHandler.CREDENTIALS_INVALID);
+            }
+        } else {
+            // New user - create account with Google
+            user = new User();
+            user.setEmail(email);
+            user.setFullName(fullName != null ? fullName.trim() : email.split("@")[0]);
+            // Generate unique username from email
+            String baseUsername = email.split("@")[0];
+            String username = baseUsername;
+            int counter = 1;
+            while (userRepository.existsByUsername(username)) {
+                username = baseUsername + counter;
+                counter++;
+            }
+            user.setUsername(username);
+            // Generate random password (never used but required for database)
+            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            user.setRole("member");
+            user.setProvider("GOOGLE");
+            user.setProviderId(providerId);
+            user.setStatus("active");
+            user.setCreatedAt(LocalDateTime.now());
+            
+            // Set default values for optional fields to avoid NULL issues
+            user.setPhone("");
+            user.setAddress("");
+            user.setGender("other");
+            user.setIdentityCard("");
+            
+            user = userRepository.save(user);
+            
+            log.info("New Google user registered: {}", email);
+        }
+        
+        // Generate JWT token
+        String token = jwtService.generateToken(user.getEmail(), user.getRole());
+        
+        // Check if profile is complete
+        boolean profileComplete = isProfileComplete(user);
+        
+        LoginResponse response = LoginResponse.builder()
+                .message("Login with Google successful")
+                .role(user.getRole())
+                .token(token)
+                .id(user.getUserId())
+                .sex(user.getGender())
+                .fullName(user.getFullName())
+                .profileComplete(profileComplete)
+                .build();
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Check if user profile is complete
+     * Profile is complete when all required fields are filled
+     */
+    private boolean isProfileComplete(User user) {
+        // Check required fields
+        boolean hasPhone = user.getPhone() != null && !user.getPhone().trim().isEmpty();
+        boolean hasAddress = user.getAddress() != null && !user.getAddress().trim().isEmpty();
+        boolean hasIdentityCard = user.getIdentityCard() != null && !user.getIdentityCard().trim().isEmpty();
+        boolean hasDateOfBirth = user.getDateOfBirth() != null;
+        boolean hasGender = user.getGender() != null && !user.getGender().trim().isEmpty() && !user.getGender().equals("other");
+        
+        // Profile is complete if ALL fields are filled
+        return hasPhone && hasAddress && hasIdentityCard && hasDateOfBirth && hasGender;
+    }
+    
+    @Override
+    @Transactional
+    public ResponseEntity<String> updateProfile(UpdateProfileRequest request, Authentication authentication) {
+        try {
+            // Get current user
+            User user = getCurrentUser(authentication);
+            
+            // Update user profile fields
+            user.setPhone(request.getPhone().trim());
+            user.setAddress(request.getAddress().trim());
+            user.setDateOfBirth(request.getDateOfBirth());
+            user.setGender(request.getGender().trim());
+            user.setIdentityCard(request.getIdentityCard().trim());
+            
+            // Save updated user
+            userRepository.save(user);
+            
+            log.info("Profile updated successfully for user: {}", user.getEmail());
+            
+            return ResponseEntity.ok("Profile updated successfully");
+            
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error updating profile: ", e);
+            return ResponseEntity.badRequest().body("Unable to update profile: " + e.getMessage());
         }
     }
 }
