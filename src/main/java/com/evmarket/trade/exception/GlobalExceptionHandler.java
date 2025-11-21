@@ -69,8 +69,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<BaseResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        // Extract more specific error message from the exception
+        String errorMessage = "Data integrity violation";
+        String exceptionMessage = ex.getMessage();
+        if (exceptionMessage != null) {
+            // Check for common constraint violations
+            if (exceptionMessage.contains("email") || exceptionMessage.contains("EMAIL")) {
+                errorMessage = "Email already exists";
+            } else if (exceptionMessage.contains("username") || exceptionMessage.contains("USERNAME")) {
+                errorMessage = "Username already exists";
+            } else if (exceptionMessage.contains("identity_card") || exceptionMessage.contains("IDENTITY_CARD")) {
+                errorMessage = "Identity card already exists";
+            } else if (exceptionMessage.contains("Duplicate entry")) {
+                errorMessage = "Duplicate entry: " + exceptionMessage;
+            }
+        }
+        
         BaseResponse<Void> response = BaseResponse.<Void>builder()
-                .message("Data integrity violation")
+                .message(errorMessage)
                 .success(false)
                 .data(null)
                 .build();
