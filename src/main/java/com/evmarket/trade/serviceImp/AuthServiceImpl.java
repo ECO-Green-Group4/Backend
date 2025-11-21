@@ -361,7 +361,9 @@ public class AuthServiceImpl implements AuthService {
             user.setPhone("");
             user.setAddress("");
             user.setGender("other");
-            user.setIdentityCard("");
+            // Set identityCard to null (not empty string) to avoid unique constraint violation
+            // NULL values are allowed multiple times in unique columns
+            user.setIdentityCard(null);
             
             user = userRepository.save(user);
             
